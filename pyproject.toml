@@ -18,6 +18,7 @@ black = "^23.3.0"
 ruff = "^0.0.270"
 isort = "^5.12.0"
 poethepoet = "^0.20.0"
+yamlfix = "^1.10.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -25,13 +26,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
 isort = "isort afids_utils"
-isort_check = "isort -c afids_utils"
+isort-check = "isort -c afids_utils"
 black = "black afids_utils"
-black_check = "black --check afids_utils"
+black-check = "black --check afids_utils"
 ruff = "ruff --fix afids_utils"
-ruff_check = "ruff afids_utils"
-quality = ["isort", "black", "ruff"]
-quality_check = ["isort-check", "black-check", "ruff-check"]
+ruff-check = "ruff afids_utils"
+quality = ["yamlfix", "isort", "black", "ruff"]
+quality-check = ["yamlfix-check", "isort-check", "black-check", "ruff-check"]
 
 [tool.isort]
 profile = "black"
@@ -43,3 +44,17 @@ line-length = 79
 
 [tool.ruff]
 line-length = 79
+
+[tool.poe.tasks.yamlfix]
+shell = """
+find . -type f \\( \
+    -iname \\*.yaml -o -iname \\*.yml \
+\\) -exec yamlfix {} \\;
+"""
+
+[tool.poe.tasks.yamlfix-check]
+shell = """
+find . -type f \\( \
+    -iname \\*.yaml -o -iname \\*.yml \
+\\) -exec yamlfix --check {} \\;
+"""

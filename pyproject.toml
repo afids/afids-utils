@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "afids-utils"
+version = "0.1.0-pre.1"
+description = "Utility functions for working with AFIDs data / workflows"
+authors = ["Jason Kai <tkai@uwo.ca>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "afids_utils"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8, <3.11"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+ruff = "^0.0.270"
+isort = "^5.12.0"
+poethepoet = "^0.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poe.tasks]
+isort = "isort afids_utils"
+isort_check = "isort -c afids_utils"
+black = "black afids_utils"
+black_check = "black --check afids_utils"
+ruff = "ruff --fix afids_utils"
+ruff_check = "ruff afids_utils"
+quality = ["isort", "black", "ruff"]
+quality_check = ["isort-check", "black-check", "ruff-check"]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 79
+
+[tool.black]
+line-length = 79
+
+[tool.ruff]
+line-length = 79

@@ -1,9 +1,3 @@
----
-name: Pull request
-about: Create a pull request to cotnribute to the repository
-labels: 
----
-
 **Proposed changes**
 Describe the changes implemented in this pull request. If the changes fix a 
 bug or resolves a feature request, be sure to link the issue. Please explain 

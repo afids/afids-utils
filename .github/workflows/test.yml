@@ -77,6 +77,5 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root --with dev
-        # Example of test
-      # - name: Test minimum inputs
-        # run: poetry run poe test_base
+      - name: Perform unit testing
+        run: poetry run poe test

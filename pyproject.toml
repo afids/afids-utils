@@ -9,6 +9,9 @@ packages = [{include = "afids_utils"}]
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
+nibabel = "^5.1.0"
+numpy = "^1.24.3"
+pandas = "^2.0.2"
 
 [tool.poetry.group.dev]
 optional = true
@@ -19,6 +22,8 @@ ruff = "^0.0.270"
 isort = "^5.12.0"
 poethepoet = "^0.20.0"
 yamlfix = "^1.10.0"
+pytest = "^7.3.1"
+hypothesis = "^6.76.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -33,6 +38,7 @@ ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
 quality = ["yamlfix", "isort", "black", "ruff"]
 quality-check = ["yamlfix-check", "isort-check", "black-check", "ruff-check"]
+test = "pytest --doctest-modules"
 
 [tool.isort]
 profile = "black"

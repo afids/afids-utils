@@ -12,12 +12,7 @@ from hypothesis import strategies as st
 from numpy.typing import NDArray
 
 from afids_utils.exceptions import InvalidFiducialNumberError
-from afids_utils.io.io import (
-    AFIDS_FIELDNAMES,
-    afids_to_fcsv,
-    get_afid,
-    load_nii,
-)
+from afids_utils.io import AFIDS_FIELDNAMES, afids_to_fcsv, get_afid, load_nii
 
 
 @pytest.fixture
@@ -49,35 +44,35 @@ def valid_fcsv_file() -> PathLike[str]:
 
 
 class TestGetAfid:
-    @given(fid_num=st.integers(min_value=1, max_value=32))
+    @given(afid_num=st.integers(min_value=1, max_value=32))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_valid_num_get_afid(
-        self, valid_fcsv_file: PathLike[str], fid_num: int
+        self, valid_fcsv_file: PathLike[str], afid_num: int
     ):
-        afid = get_afid(valid_fcsv_file, fid_num)
+        afid = get_afid(valid_fcsv_file, afid_num)
 
         # Check array type
         assert isinstance(afid, np.ndarray)
         # Check array values
         assert afid.dtype == np.single
 
-    @given(fid_num=st.integers(min_value=-1000, max_value=1000))
+    @given(afid_num=st.integers(min_value=-1000, max_value=1000))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_invalid_num_get_afid(
         self,
         valid_fcsv_file: PathLike[str],
-        fid_num: int,
+        afid_num: int,
     ):
-        assume(fid_num < 1 or fid_num > 32)
+        assume(afid_num < 1 or afid_num > 32)
 
         with pytest.raises(
             InvalidFiducialNumberError, match=".*is not valid."
         ):
-            _ = get_afid(valid_fcsv_file, fid_num)
+            _ = get_afid(valid_fcsv_file, afid_num)
 
 
 @pytest.fixture

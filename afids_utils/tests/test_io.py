@@ -77,6 +77,13 @@ def afid_coords(
 
 class TestAfidsToFcsv:
     @given(afids_coords=afid_coords())
+    def test_invalid_template(self, afids_coords: NDArray[np.single]) -> None:
+        with pytest.raises(FileNotFoundError):
+            afids_to_fcsv(
+                afids_coords, "/invalid/fcsv/path", "/random/output/path"
+            )
+
+    @given(afids_coords=afid_coords())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )

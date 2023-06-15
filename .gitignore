@@ -1,0 +1,7 @@
+# Directories
+__pycache__/
+
+# Testing
+.hypothesis
+.ruff_cache
+.pytest_cache

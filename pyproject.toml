@@ -5,10 +5,15 @@ description = "Utility functions for working with AFIDs data / workflows"
 authors = ["Jason Kai <tkai@uwo.ca>"]
 license = "MIT"
 readme = "README.md"
-packages = [{include = "afids_utils"}]
+packages = [
+    {include = "afids_utils"}
+]
+exclude = ["afids_utils/tests"]
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
+numpy = "^1.24.3"
+pandas = "^2.0.2"
 
 [tool.poetry.group.dev]
 optional = true
@@ -19,6 +24,9 @@ ruff = "^0.0.270"
 isort = "^5.12.0"
 poethepoet = "^0.20.0"
 yamlfix = "^1.10.0"
+pytest = "^7.3.1"
+hypothesis = "^6.76.0"
+pytest-cov = "^4.1.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -33,6 +41,14 @@ ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
 quality = ["yamlfix", "isort", "black", "ruff"]
 quality-check = ["yamlfix-check", "isort-check", "black-check", "ruff-check"]
+test = "pytest --doctest-modules afids_utils/tests"
+test_cov = "pytest --doctest-modules --cov=afids_utils afids_utils/tests/ --cov-report xml:../cov.xml"
+
+[tool.coverage]
+omit = "afids_utils/tests/*"
+fail_under = 90
+precision = 2
+show_missing = true
 
 [tool.isort]
 profile = "black"

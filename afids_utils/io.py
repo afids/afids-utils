@@ -6,27 +6,27 @@ from importlib import resources
 from os import PathLike
 
 import numpy as np
-import pandas as pd
+import polars as pl
 from numpy.typing import NDArray
 
 from afids_utils.exceptions import InvalidFiducialNumberError
 
-FCSV_FIELDNAMES = [
-    "# columns = id",
-    "x",
-    "y",
-    "z",
-    "ow",
-    "ox",
-    "oy",
-    "oz",
-    "vis",
-    "sel",
-    "lock",
-    "label",
-    "desc",
-    "associatedNodeID",
-]
+FCSV_FIELDNAMES = {
+    "# columns = id": pl.Utf8,
+    "x": pl.Float32,
+    "y": pl.Float32,
+    "z": pl.Float32,
+    "ow": pl.UInt8,
+    "ox": pl.UInt8,
+    "oy": pl.UInt8,
+    "oz": pl.UInt8,
+    "vis": pl.UInt8,
+    "sel": pl.UInt8,
+    "lock": pl.UInt8,
+    "label": pl.UInt8,
+    "desc": pl.Utf8,
+    "associatedNodeID": pl.Utf8,
+}
 
 
 def get_afid(
@@ -35,11 +35,16 @@ def get_afid(
     """Extract specific fiducial's spatial coordinates"""
     if fid_num < 1 or fid_num > 32:
         raise InvalidFiducialNumberError(fid_num)
-    fcsv_df = pd.read_csv(
-        fcsv_path, sep=",", header=2, usecols=FCSV_FIELDNAMES
+    fcsv_df = pl.scan_csv(
+        fcsv_path, separator=",", skip_rows=2, dtypes=FCSV_FIELDNAMES
     )
 
-    return fcsv_df.loc[fid_num - 1, ["x", "y", "z"]].to_numpy(dtype="single")
+    return (
+        fcsv_df.filter(pl.col("label") == fid_num)
+        .select("x", "y", "z")
+        .collect()
+        .to_numpy()[0]
+    )
 
 
 def afids_to_fcsv(
@@ -52,7 +57,9 @@ def afids_to_fcsv(
         "afids_utils.resources", "template.fcsv"
     ) as template_fcsv_file:
         header = [template_fcsv_file.readline() for _ in range(3)]
-        reader = csv.DictReader(template_fcsv_file, fieldnames=FCSV_FIELDNAMES)
+        reader = csv.DictReader(
+            template_fcsv_file, fieldnames=list(FCSV_FIELDNAMES.keys())
+        )
         fcsv = list(reader)
 
     # Loop over fiducials and update with fiducial spatial coordinates
@@ -65,6 +72,8 @@ def afids_to_fcsv(
     with open(fcsv_output, "w", encoding="utf-8", newline="") as out_fcsv_file:
         for line in header:
             out_fcsv_file.write(line)
-        writer = csv.DictWriter(out_fcsv_file, fieldnames=FCSV_FIELDNAMES)
+        writer = csv.DictWriter(
+            out_fcsv_file, fieldnames=list(FCSV_FIELDNAMES.keys())
+        )
         for row in fcsv:
             writer.writerow(row)

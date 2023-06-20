@@ -1,16 +1,14 @@
+---
 comment:
-  layout: "header, diff, flags, components"
-  
+  layout: header, diff, flags, components
 coverage:
   status:
     project:
       default:
         target: 100%
         threshold: 5%
-
 component_management:
   individual_components:
     - component_id: afids-utils_io
       name: afids-utils_io
-      paths:
-        - afids_utils/io/
+      paths: [afids_utils/io/]

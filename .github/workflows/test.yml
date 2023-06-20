@@ -76,7 +76,7 @@ jobs:
             }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with dev 
+        run: poetry install --no-interaction --no-root --with dev
       - name: Install library
         run: poetry install --no-interaction --with dev
       - name: Perform unit testing
@@ -84,5 +84,5 @@ jobs:
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}        
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ../cov.xml

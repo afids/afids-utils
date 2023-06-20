@@ -9,7 +9,6 @@ import numpy as np
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
-from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
 from afids_utils.exceptions import InvalidFiducialNumberError
@@ -61,7 +60,8 @@ class TestAfidsToFcsv:
     def test_invalid_template(self, afids_coords: NDArray[np.single]) -> None:
         with pytest.raises(FileNotFoundError):
             afids_to_fcsv(
-                afids_coords, "/invalid/fcsv/path",
+                afids_coords,
+                "/invalid/fcsv/path",
             )
 
     @given(afids_coords=afid_coords())

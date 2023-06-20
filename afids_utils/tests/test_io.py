@@ -14,6 +14,7 @@ from numpy.typing import NDArray
 
 from afids_utils.exceptions import InvalidFiducialNumberError
 from afids_utils.io import FCSV_FIELDNAMES, afids_to_fcsv, get_afid
+from afids_utils.tests.strategies import afid_coords
 
 
 @pytest.fixture
@@ -55,32 +56,12 @@ class TestGetAfid:
             get_afid(valid_fcsv_file, afid_num)
 
 
-@st.composite
-def afid_coords(
-    draw: st.DrawFn,
-    min_value: float = -50.0,
-    max_value: float = 50.0,
-    width: int = 16,
-) -> NDArray[np.single]:
-    coords = draw(
-        arrays(
-            shape=(32, 3),
-            dtype=np.single,
-            elements=st.floats(
-                min_value=min_value, max_value=max_value, width=width
-            ),
-        )
-    )
-
-    return coords
-
-
 class TestAfidsToFcsv:
     @given(afids_coords=afid_coords())
     def test_invalid_template(self, afids_coords: NDArray[np.single]) -> None:
         with pytest.raises(FileNotFoundError):
             afids_to_fcsv(
-                afids_coords, "/invalid/fcsv/path", "/random/output/path"
+                afids_coords, "/invalid/fcsv/path",
             )
 
     @given(afids_coords=afid_coords())

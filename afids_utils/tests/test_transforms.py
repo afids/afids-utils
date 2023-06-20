@@ -1,16 +1,11 @@
 from __future__ import annotations
 
-from os import PathLike
-from pathlib import Path
-
 import numpy as np
-import nibabel as nib
-import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from numpy.typing import NDArray
 
-from afids_utils.tests.strategies import world_coord, affine_xfm
+from afids_utils.tests.strategies import affine_xfm, world_coord
 from afids_utils.transforms import afid_world2voxel
 
 

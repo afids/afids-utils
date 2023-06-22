@@ -120,3 +120,22 @@ def affine_xfm(
         affine = matrices[xfm] @ affine
 
     return affine
+
+
+@st.composite
+def nii_img(
+    draw: st.DrawFn,
+    shape: tuple[int, int, int] = (16, 16, 16),
+    min_value: int = 0,
+    max_value: int = 255,
+) -> NDArray(np.float_ | np.int_):
+    return draw(
+        arrays(
+            shape=shape,
+            dtype=np.float_ or np.int_,
+            elements=st.one_of(
+                st.floats(min_value=min_value, max_value=max_value),
+                st.integers(min_value=min_value, max_value=max_value),
+            ),
+        )
+    )

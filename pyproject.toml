@@ -49,6 +49,7 @@ omit = "afids_utils/tests/*"
 fail_under = 90
 precision = 2
 show_missing = true
+exclude_lines = ["pragma: no cover"]
 
 [tool.isort]
 profile = "black"

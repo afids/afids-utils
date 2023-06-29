@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.abspath("../"))
 # -- Project information -----------------------------------------------------
 
 project = "AFIDs Utils"
+release = ilm.version("afids_utils")
 copyright = f"{datetime.date.today().year}, Anatomical Fiducials"
 author = "Anatomical Fiducials Contributors"
 
@@ -32,15 +33,15 @@ author = "Anatomical Fiducials Contributors"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_reredirects",
     "sphinxarg.ext",
+    "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
-    "sphinx.ext.autodoc",
-    "sphinxcontrib.asciinema",
     "myst_parser",
-    "sphinx_copybutton",
-    "sphinx_reredirects",
-    "sphinx_design",
+    "numpydoc",
 ]
 
 
@@ -62,14 +63,9 @@ napoleon_numpy_docstring = True
 
 autodoc_member_order = "bysource"
 autodoc_typehints = "description"
-# autodoc_type_aliases = {
-#     "ZipList": "snakebids.types.ZipList",
-#     "ZipListLike": "snakebids.types.ZipListLike",
-#     "InputsConfig": "snakebids.types.InputsConfig",
-# }
+# autodoc_type_aliases = {}
 autodoc_typehints_format = "short"
 autosummary_imported_members = True
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -84,6 +80,7 @@ master_doc = "index"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/1.24", None),
 }
 
 
@@ -109,10 +106,4 @@ html_css_files = ["css/typealiases.css"]
 
 # redirects = {
 #     "migration/0.5_to_0.6.md": "migration/0.5_to_0.8.html",
-# }
-
-# sphinxcontrib_asciinema_defaults = {
-#     "preload": 1,
-#     "rows": 24,
-#     "speed": 3,
 # }

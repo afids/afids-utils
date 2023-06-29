@@ -2,9 +2,20 @@
 ```
 
 ```{toctree}
-:caption: Reference
+:caption: General
+:name: general
+:hidden:
+:maxdepth: 2
+
+general/main
+```
+
+```{toctree}
+:caption: API Reference
+:name: api_reference
 :hidden:
 :maxdepth: 1
 
-api/main
+api/io
+api/transform
 ```

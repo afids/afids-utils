@@ -32,7 +32,15 @@ FCSV_FIELDNAMES = {
 def get_afid(
     fcsv_path: PathLike[str] | str, fid_num: int
 ) -> NDArray[np.single]:
-    """Extract specific fiducial's spatial coordinates"""
+    """
+    Extract specific fiducial's spatial coordinates
+    
+    Returns
+    -------
+    NDArray[np.single]
+        Floating-point array containing spatial coordinates (x, y, z) of single
+        AFID. 
+    """
     if fid_num < 1 or fid_num > 32:
         raise InvalidFiducialNumberError(fid_num)
     fcsv_df = pl.scan_csv(

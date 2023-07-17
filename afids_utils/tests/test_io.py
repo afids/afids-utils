@@ -64,6 +64,30 @@ class TestAfidsToFcsv:
                 "/invalid/fcsv/path",
             )
 
+    @given(afids_coords=afid_coords(bad_range=True))
+    def test_invalid_num_afids(self, afids_coords: NDArray[np.single]) -> None:
+        out_fcsv_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, prefix="sub-test_afids.fcsv"
+        )
+        out_fcsv_path = Path(out_fcsv_file.name)
+        with pytest.raises(TypeError) as err:
+            afids_to_fcsv(afids_coords, out_fcsv_path)
+
+        assert "AFIDs, but received" in str(err.value)
+
+    @given(afids_coords=afid_coords(bad_dims=True))
+    def test_invalid_afids_dims(
+        self, afids_coords: NDArray[np.single]
+    ) -> None:
+        out_fcsv_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, prefix="sub-test_afids.fcsv"
+        )
+        out_fcsv_path = Path(out_fcsv_file.name)
+        with pytest.raises(TypeError) as err:
+            afids_to_fcsv(afids_coords, out_fcsv_path)
+
+        assert "Expected 3 spatial dimensions" in str(err.value)
+
     @given(afids_coords=afid_coords())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],

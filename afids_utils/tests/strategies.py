@@ -12,10 +12,23 @@ def afid_coords(
     min_value: float = -50.0,
     max_value: float = 50.0,
     width: int = 16,
+    bad_range: bool = False,
+    bad_dims: bool = False,
 ) -> NDArray[np.single]:
+    # Set (in)valid dimensions for array containing AFID coords
+    num_afids, spatial_dims = 32, 3
+    if bad_range:
+        num_afids = draw(
+            st.integers(min_value=0, max_value=100).filter(lambda x: x != 32)
+        )
+    if bad_dims:
+        spatial_dims = draw(
+            st.integers(min_value=0, max_value=10).filter(lambda x: x != 3)
+        )
+
     return draw(
         arrays(
-            shape=(32, 3),
+            shape=(num_afids, spatial_dims),
             dtype=np.single,
             elements=st.floats(
                 min_value=min_value, max_value=max_value, width=width

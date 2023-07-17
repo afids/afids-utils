@@ -90,6 +90,17 @@ def afids_to_fcsv(
         )
         fcsv = list(reader)
 
+    # Check to make sure shape of AFIDs array matches expected template
+    if afid_coords.shape[0] != len(fcsv):
+        raise TypeError(
+            f"Expected {len(fcsv)} AFIDs, but received {afid_coords.shape[0]}."
+        )
+    if afid_coords.shape[1] != 3:
+        raise TypeError(
+            "Expected 3 spatial dimensions (x, y, z),"
+            f"but received {afid_coords.shape[1]}."
+        )
+
     # Loop over fiducials and update with fiducial spatial coordinates
     for idx, row in enumerate(fcsv):
         row["x"] = afid_coords[idx][0]

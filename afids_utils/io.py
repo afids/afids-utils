@@ -2,14 +2,51 @@
 from __future__ import annotations
 
 import csv
+import json
 from importlib import resources
 from os import PathLike
+from pathlib import Path
 
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
 from afids_utils.exceptions import InvalidFiducialNumberError
+
+EXPECTED_DESCS = [
+    ["AC"],
+    ["PC"],
+    ["infracollicular sulcus", "ICS"],
+    ["PMJ"],
+    ["superior interpeduncular fossa", "SIPF"],
+    ["R superior LMS", "RSLMS"],
+    ["L superior LMS", "LSLMS"],
+    ["R inferior LMS", "RILMS"],
+    ["L inferior LMS", "LILMS"],
+    ["Culmen", "CUL"],
+    ["Intermammillary sulcus", "IMS"],
+    ["R MB", "RMB"],
+    ["L MB", "LMB"],
+    ["pineal gland", "PG"],
+    ["R LV at AC", "RLVAC"],
+    ["L LV at AC", "LLVAC"],
+    ["R LV at PC", "RLVPC"],
+    ["L LV at PC", "LLVPC"],
+    ["Genu of CC", "GENU"],
+    ["Splenium of CC", "SPLE"],
+    ["R AL temporal horn", "RALTH"],
+    ["L AL temporal horn", "LALTH"],
+    ["R superior AM temporal horn", "RSAMTH"],
+    ["L superior AM temporal horn", "LSAMTH"],
+    ["R inferior AM temporal horn", "RIAMTH"],
+    ["L inferior AM temporal horn", "LIAMTH"],
+    ["R indusium griseum origin", "RIGO"],
+    ["L indusium griseum origin", "LIGO"],
+    ["R ventral occipital horn", "RVOH"],
+    ["L ventral occipital horn", "LVOH"],
+    ["R olfactory sulcal fundus", "ROSF"],
+    ["L olfactory sulcal fundus", "LOSF"],
+]
 
 FCSV_FIELDNAMES = {
     "# columns = id": pl.Utf8,
@@ -30,7 +67,7 @@ FCSV_FIELDNAMES = {
 
 
 def get_afid(
-    fcsv_path: PathLike[str] | str, fid_num: int
+    afids_fpath: PathLike[str] | str, fid_num: int
 ) -> NDArray[np.single]:
     """
     Extract specific fiducial's spatial coordinates
@@ -50,17 +87,55 @@ def get_afid(
         coordinate
     """
     if fid_num < 1 or fid_num > 32:
-        raise InvalidFiducialNumberError(fid_num)
-    fcsv_df = pl.scan_csv(
-        fcsv_path, separator=",", skip_rows=2, dtypes=FCSV_FIELDNAMES
-    )
+        raise InvalidFiducialNumberError(
+            f"Invalid fiducial number: {fid_num}."
+        )
 
-    return (
-        fcsv_df.filter(pl.col("label") == fid_num)
-        .select("x", "y", "z")
-        .collect()
-        .to_numpy()[0]
-    )
+    afids_fpath = Path(afids_fpath)
+    afids_fpath_ext = afids_fpath.suffix
+
+    # Handling of different file extensions
+    if afids_fpath_ext == ".fcsv":
+        afids_df = pl.scan_csv(
+            afids_fpath, separator=",", skip_rows=2, dtypes=FCSV_FIELDNAMES
+        )
+
+        # Check fiducial number matches expected description
+        if (
+            not afids_df.filter(pl.col("label") == fid_num)
+            .select("desc")
+            .collect()
+            .item()
+        ):
+            raise ValueError(
+                f"Fiducial {fid_num} does not match expected description"
+            )
+
+        return (
+            afids_df.filter(pl.col("label") == fid_num)
+            .select("x", "y", "z")
+            .collect()
+            .to_numpy()[0]
+        )
+
+    elif afids_fpath_ext == ".json":
+        # Polars currently cannot handle reading in the JSON directly
+        # NOTE: this may be a bottleneck
+        with open(afids_fpath, "r", encoding="utf-8") as json_file:
+            afids_json = json.load(json_file)
+        afids_data = afids_json["markups"][0]["controlPoints"][fid_num - 1]
+
+        # Check fiducial number matches expected description
+        if afids_data["description"] not in EXPECTED_DESCS[fid_num - 1]:
+            raise ValueError(
+                f"Fiducial {fid_num} does not match expected description"
+            )
+
+        return np.array(afids_data["position"], dtype=np.single)
+
+    else:
+        # Unknown extension
+        raise IOError("Invalid file extension.")
 
 
 def afids_to_fcsv(

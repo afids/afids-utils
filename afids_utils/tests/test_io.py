@@ -23,12 +23,19 @@ def valid_fcsv_file() -> PathLike[str]:
     )
 
 
+@pytest.fixture
+def valid_json_file() -> PathLike[str]:
+    return (
+        Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.json"
+    )
+
+
 class TestGetAfid:
     @given(afid_num=st.integers(min_value=1, max_value=32))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_valid_num_get_afid(
+    def test_valid_fcsv_get_afid(
         self, valid_fcsv_file: PathLike[str], afid_num: int
     ):
         afid = get_afid(valid_fcsv_file, afid_num)
@@ -42,7 +49,7 @@ class TestGetAfid:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_num_get_afid(
+    def test_invalid_fcsv_get_afid(
         self,
         valid_fcsv_file: PathLike[str],
         afid_num: int,
@@ -53,6 +60,56 @@ class TestGetAfid:
             InvalidFiducialNumberError, match=".*is not valid."
         ):
             get_afid(valid_fcsv_file, afid_num)
+
+    @given(afid_num=st.integers(min_value=1, max_value=32))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_valid_json_get_afid(
+        self, valid_json_file: PathLike[str], afid_num: int
+    ):
+        afid = get_afid(valid_json_file, afid_num)
+
+        # Check array type
+        assert isinstance(afid, np.ndarray)
+        # Check array values
+        assert afid.dtype == np.single
+
+    @given(afid_num=st.integers(min_value=-1000, max_value=1000))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_invalid_json_get_afid(
+        self,
+        valid_json_file: PathLike[str],
+        afid_num: int,
+    ):
+        assume(afid_num < 1 or afid_num > 32)
+
+        with pytest.raises(
+            InvalidFiducialNumberError, match=".*is not valid."
+        ):
+            get_afid(valid_json_file, afid_num)
+
+    @given(
+        afid_num=st.integers(min_value=1, max_value=32),
+        ext=st.text(
+            min_size=2,
+            max_size=5,
+            alphabet=st.characters(blacklist_categories=("P", "Nd")),
+        ),
+    )
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_invalid_extension(
+        self, valid_fcsv_file: PathLike[str], afid_num: int, ext: str
+    ):
+        assume(not ext == "fcsv" or not ext == "json")
+        invalid_file_ext = valid_fcsv_file.with_suffix(f".{ext}")
+
+        with pytest.raises(IOError, match="Unexpected file extension"):
+            get_afid(invalid_file_ext, afid_num)
 
 
 class TestAfidsToFcsv:

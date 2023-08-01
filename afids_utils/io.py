@@ -1,4 +1,4 @@
-"""Methods for loading and saving nifti files"""
+"""Methods for loading and saving files associated with AFIDs"""
 from __future__ import annotations
 
 import csv
@@ -32,7 +32,23 @@ FCSV_FIELDNAMES = {
 def get_afid(
     fcsv_path: PathLike[str] | str, fid_num: int
 ) -> NDArray[np.single]:
-    """Extract specific fiducial's spatial coordinates"""
+    """
+    Extract specific fiducial's spatial coordinates
+
+    Parameters
+    ----------
+    fcsv_path : os.PathLike[str] | str
+        Path to .fcsv file to extract AFID coordinates from
+
+    fid_num : int
+        Unique fiducial number to extract from .fcsv file
+
+    Returns
+    -------
+    numpy.ndarray[shape=(3,), dtype=numpy.single]
+        NumPy array containing spatial coordinates (x, y, z) of single AFID
+        coordinate
+    """
     if fid_num < 1 or fid_num > 32:
         raise InvalidFiducialNumberError(fid_num)
     fcsv_df = pl.scan_csv(
@@ -51,7 +67,19 @@ def afids_to_fcsv(
     afid_coords: NDArray[np.single],
     fcsv_output: PathLike[str] | str,
 ) -> None:
-    """AFIDS to Slicer-compatible .fcsv file"""
+    """
+    Save AFIDS to Slicer-compatible .fcsv file
+
+    Parameters
+    ----------
+    afid_coords : numpy.ndarray[shape=(N, 3), dtype=numpy.single]
+        Floating-point NumPy array containing spatial coordinates (x, y, z) of
+        `N` AFIDs
+
+    fcsv_output : os.PathLike[str] | str
+        Path of file (including filename and extension) to save AFIDs to
+
+    """
     # Read in fcsv template
     with resources.open_text(
         "afids_utils.resources", "template.fcsv"

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import csv
 import tempfile
-from os import PathLike, remove
+from os import PathLike
 from pathlib import Path
 
 import numpy as np
@@ -64,6 +64,28 @@ class TestAfidsToFcsv:
                 "/invalid/fcsv/path",
             )
 
+    @given(afids_coords=afid_coords(bad_range=True))
+    def test_invalid_num_afids(self, afids_coords: NDArray[np.single]) -> None:
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+        ) as out_fcsv_file:
+            with pytest.raises(TypeError) as err:
+                afids_to_fcsv(afids_coords, out_fcsv_file)
+
+            assert "AFIDs, but received" in str(err.value)
+
+    @given(afids_coords=afid_coords(bad_dims=True))
+    def test_invalid_afids_dims(
+        self, afids_coords: NDArray[np.single]
+    ) -> None:
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+        ) as out_fcsv_file:
+            with pytest.raises(TypeError) as err:
+                afids_to_fcsv(afids_coords, out_fcsv_file)
+
+            assert "Expected 3 spatial dimensions" in str(err.value)
+
     @given(afids_coords=afid_coords())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
@@ -71,40 +93,33 @@ class TestAfidsToFcsv:
     def test_write_fcsv(
         self, afids_coords: NDArray[np.single], valid_fcsv_file: PathLike[str]
     ) -> None:
-        out_fcsv_file = tempfile.NamedTemporaryFile(
-            mode="w", delete=False, prefix="sub-test_afids.fcsv"
-        )
-        out_fcsv_path = Path(out_fcsv_file.name)
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+        ) as out_fcsv_file:
+            # Create and check output file
+            afids_to_fcsv(afids_coords, out_fcsv_file.name)
 
-        afids_to_fcsv(afids_coords, out_fcsv_path)
+            # Load files
+            with open(
+                valid_fcsv_file, "r", encoding="utf-8", newline=""
+            ) as template_fcsv_file, open(
+                out_fcsv_file.name, "r", encoding="utf-8", newline=""
+            ) as output_fcsv_file:
+                template_header = [
+                    template_fcsv_file.readline() for _ in range(3)
+                ]
+                output_header = [output_fcsv_file.readline() for _ in range(3)]
+                reader = csv.DictReader(
+                    output_fcsv_file, fieldnames=FCSV_FIELDNAMES
+                )
+                output_fcsv = list(reader)
 
-        # Check file was created
-        assert out_fcsv_path.exists()
-
-        # Load files
-        with open(
-            valid_fcsv_file, "r", encoding="utf-8", newline=""
-        ) as template_fcsv_file:
-            template_header = [template_fcsv_file.readline() for _ in range(3)]
-
-        with open(
-            out_fcsv_path, "r", encoding="utf-8", newline=""
-        ) as output_fcsv_file:
-            output_header = [output_fcsv_file.readline() for _ in range(3)]
-            reader = csv.DictReader(
-                output_fcsv_file, fieldnames=FCSV_FIELDNAMES
-            )
-            output_fcsv = list(reader)
-
-        # Check header
-        assert output_header == template_header
-        # Check contents
-        for idx, row in enumerate(output_fcsv):
-            assert (row["x"], row["y"], row["z"]) == (
-                str(afids_coords[idx][0]),
-                str(afids_coords[idx][1]),
-                str(afids_coords[idx][2]),
-            )
-
-        # Delete temporary file
-        remove(out_fcsv_path)
+            # Check header
+            assert output_header == template_header
+            # Check contents
+            for idx, row in enumerate(output_fcsv):
+                assert (row["x"], row["y"], row["z"]) == (
+                    str(afids_coords[idx][0]),
+                    str(afids_coords[idx][1]),
+                    str(afids_coords[idx][2]),
+                )

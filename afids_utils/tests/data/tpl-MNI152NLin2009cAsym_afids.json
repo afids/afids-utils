@@ -244,7 +244,7 @@
                 {
                     "id": "vtkMRMLMarkupsFiducialNode_10",
                     "label": "10",
-                    "description": "culmen",
+                    "description": "Culmen",
                     "associatedNodeID": "vtkMRMLScalarVolumeNode1",
                     "position": [
                         -0.004750000000000004,
@@ -270,7 +270,7 @@
                 {
                     "id": "vtkMRMLMarkupsFiducialNode_11",
                     "label": "11",
-                    "description": "intermammillary sulcus",
+                    "description": "Intermammillary sulcus",
                     "associatedNodeID": "vtkMRMLScalarVolumeNode1",
                     "position": [
                         -0.0665,
@@ -478,7 +478,7 @@
                 {
                     "id": "vtkMRMLMarkupsFiducialNode_19",
                     "label": "19",
-                    "description": "genu of CC",
+                    "description": "Genu of CC",
                     "associatedNodeID": "vtkMRMLScalarVolumeNode1",
                     "position": [
                         0.17799999999999996,
@@ -504,7 +504,7 @@
                 {
                     "id": "vtkMRMLMarkupsFiducialNode_20",
                     "label": "20",
-                    "description": "splenium of CC",
+                    "description": "Splenium of CC",
                     "associatedNodeID": "vtkMRMLScalarVolumeNode1",
                     "position": [
                         0.037000000000000005,

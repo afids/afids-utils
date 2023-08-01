@@ -102,10 +102,11 @@ def get_afid(
 
         # Check fiducial number matches expected description
         if (
-            not afids_df.filter(pl.col("label") == fid_num)
+            afids_df.filter(pl.col("label") == fid_num)
             .select("desc")
             .collect()
             .item()
+            not in EXPECTED_DESCS[fid_num - 1]
         ):
             raise ValueError(
                 f"Fiducial {fid_num} does not match expected description"
@@ -119,8 +120,7 @@ def get_afid(
         )
 
     elif afids_fpath_ext == ".json":
-        # Polars currently cannot handle reading in the JSON directly
-        # NOTE: this may be a bottleneck
+        # Polars currently cannot handle Slicer-esque JSONs directly
         with open(afids_fpath, "r", encoding="utf-8") as json_file:
             afids_json = json.load(json_file)
         afids_data = afids_json["markups"][0]["controlPoints"][fid_num - 1]

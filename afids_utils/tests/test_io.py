@@ -17,6 +17,7 @@ from afids_utils.io import (
     EXPECTED_DESCS,
     FCSV_FIELDNAMES,
     afids_to_fcsv,
+    afids_to_json,
     get_afid,
 )
 from afids_utils.tests.strategies import afid_coords
@@ -299,3 +300,38 @@ class TestAfidsToFcsv:
 
         # Delete temporary file
         remove(out_fcsv_path)
+
+
+class TestAfidsToJson:
+    @given(afids_coords=afid_coords())
+    def test_invalid_json_template(
+        self, afids_coords: NDArray[np.single]
+    ) -> None:
+        with pytest.raises(FileNotFoundError):
+            afids_to_json(
+                afids_coords,
+                "/invalid/json/path",
+            )
+
+    @given(afids_coords=afid_coords())
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_write_json(
+        self, afids_coords: NDArray[np.single], valid_json_file: PathLike[str]
+    ) -> None:
+        out_json_file = tempfile.NamedTemporaryFile(
+            mode="w",
+            delete=False,
+            prefix="sub-test_desc-",
+            suffix="_afids.json",
+        )
+        out_json_path = Path(out_json_file.name)
+
+        afids_to_json(afids_coords, out_json_path)
+
+        # Check file was created
+        assert out_json_path.exists()
+
+        # Delete temporary file
+        remove(out_json_path)

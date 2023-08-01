@@ -191,3 +191,25 @@ def afids_to_fcsv(
         )
         for row in fcsv:
             writer.writerow(row)
+
+
+def afids_to_json(
+    afid_coords: NDArray[np.single],
+    json_output: PathLike[str] | str,
+) -> None:
+    """AFIDS to Slicer-compatible .json file"""
+    # Read in json template
+    with resources.open_text(
+        "afids_utils.resources", "template.json"
+    ) as template_json_file:
+        template_content = json.load(template_json_file)
+
+    # Loop and update with fiducial coordinates
+    for idx in range(len(afid_coords)):
+        template_content["markups"][0]["controlPoints"][idx]["position"] = [
+            str(coord) for coord in afid_coords[idx]
+        ]
+
+    # Write output json
+    with open(json_output, "w") as out_json_file:
+        json.dump(template_content, out_json_file, indent=4)

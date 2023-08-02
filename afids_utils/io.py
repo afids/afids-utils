@@ -74,8 +74,8 @@ def get_afid(
 
     Parameters
     ----------
-    fcsv_path : os.PathLike[str] | str
-        Path to .fcsv file to extract AFID coordinates from
+    afids_path : os.PathLike[str] | str
+        Path to .fcsv or .json file to extract AFID coordinates from
 
     fid_num : int
         Unique fiducial number to extract from .fcsv file
@@ -85,6 +85,16 @@ def get_afid(
     numpy.ndarray[shape=(3,), dtype=numpy.single]
         NumPy array containing spatial coordinates (x, y, z) of single AFID
         coordinate
+
+    Raises
+    ------
+    ValueError
+        If description of fiducial to extract does not match expected 
+        description
+    
+    IOError
+        If extension to fiducial file is not .fcsv or .json
+    
     """
     if fid_num < 1 or fid_num > 32:
         raise InvalidFiducialNumberError(
@@ -152,7 +162,13 @@ def afids_to_fcsv(
         `N` AFIDs
 
     fcsv_output : os.PathLike[str] | str
-        Path of file (including filename and extension) to save AFIDs to
+        Path of .fcsv file (including filename and extension) to save AFIDs to
+
+    Raises
+    ------
+    TypeError
+        If unexpected number of fiducials or more than 3 spatial dimensions are
+        provided
 
     """
     # Read in fcsv template
@@ -197,7 +213,19 @@ def afids_to_json(
     afid_coords: NDArray[np.single],
     json_output: PathLike[str] | str,
 ) -> None:
-    """AFIDS to Slicer-compatible .json file"""
+    """
+    Save AFIDS to Slicer-compatible .json file
+
+    Parameters
+    ----------
+    afid_coords : numpy.ndarray[shape=(N, 3), dtype=numpy.single]
+        Floating-point NumPy array containing spatial coordinates (x, y, z) of
+        `N` AFIDs
+
+    json_output : os.PathLike[str] | str
+        Path of .json file (including filename and extension) to save AFIDs to
+
+    """
     # Read in json template
     with resources.open_text(
         "afids_utils.resources", "template.json"

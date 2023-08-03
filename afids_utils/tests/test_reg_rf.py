@@ -7,12 +7,12 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
-from afids_utils.features import regRF
-from afids_utils.tests.strategies import nii_img
+from afids_utils.features import reg_rf
+from afids_utils.tests.strategies import image_data_arrays
 
 
 class TestIntegralVolume:
-    @given(nii_img=nii_img())
+    @given(nii_img=image_data_arrays())
     def test_integral_float_volume(self, nii_img: NDArray[np.float_]):
         # Compute expected result
         expected_iv_img = np.zeros(
@@ -21,13 +21,13 @@ class TestIntegralVolume:
         expected_iv_img[1:, 1:, 1:] = nii_img.cumsum(0).cumsum(1).cumsum(2)
 
         # Compute integral volume and check output
-        iv_img = regRF.integral_volume(nii_img)
+        iv_img = reg_rf.integral_volume(nii_img)
         assert iv_img.all() == expected_iv_img.all()
 
         # Check output datatype is correct
         assert iv_img.dtype == np.float_
 
-    @given(nii_img=nii_img(float=False))
+    @given(nii_img=image_data_arrays(float=False))
     def test_integral_int_volume(self, nii_img: NDArray[np.int_]):
         # Compute expected result
         expected_iv_img = np.zeros(
@@ -36,7 +36,7 @@ class TestIntegralVolume:
         expected_iv_img[1:, 1:, 1:] = nii_img.cumsum(0).cumsum(1).cumsum(2)
 
         # Compute integral volume and check output
-        iv_img = regRF.integral_volume(nii_img)
+        iv_img = reg_rf.integral_volume(nii_img)
         assert iv_img.all() == expected_iv_img.all()
 
         # Check output datatype is correct
@@ -59,7 +59,7 @@ class TestSampleCoordRegion:
         sampling_rate: int,
         multiplier: int,
     ):
-        sampled_region = regRF.sample_coord_region(
+        sampled_region = reg_rf.sample_coord_region(
             coord=coord, sampling_rate=sampling_rate, multiplier=multiplier
         )
 

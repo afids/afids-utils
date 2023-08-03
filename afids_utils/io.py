@@ -74,7 +74,7 @@ def get_afid(
 
     Parameters
     ----------
-    afids_path : os.PathLike[str] | str
+    afids_fpath : os.PathLike[str] | str
         Path to .fcsv or .json file to extract AFID coordinates from
 
     fid_num : int

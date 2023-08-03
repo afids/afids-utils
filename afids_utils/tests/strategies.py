@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Union, overload
+
 import numpy as np
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
@@ -122,14 +124,36 @@ def affine_xfm(
     return affine
 
 
-@st.composite
-def nii_img(
+@overload
+def image_data_arrays(
     draw: st.DrawFn,
     float: bool = True,
     shape: tuple[int, int, int] = (16, 16, 16),
+    min_value: float = 0,
+    max_value: float = 255,
+) -> NDArray(np.float_):
+    ...
+
+
+@overload
+def image_data_arrays(
+    draw: st.DrawFn,
+    float: bool = False,
+    shape: tuple[int, int, int] = (16, 16, 16),
     min_value: int = 0,
     max_value: int = 255,
-) -> NDArray(np.float_ | np.int_):
+) -> NDArray(np.int_):
+    ...
+
+
+@st.composite
+def image_data_arrays(
+    draw: st.DrawFn,
+    float: bool = True,
+    shape: tuple[int, int, int] = (16, 16, 16),
+    min_value: Union[int, float] = 0,
+    max_value: Union[int, float] = 255,
+) -> NDArray(Union[np.float_, np.int_]):
     etype = (
         st.floats(min_value=min_value, max_value=max_value)
         if float

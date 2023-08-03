@@ -1,4 +1,4 @@
-"""Core methods / functions for regRF"""
+"""Core methods / functions for random forest regression"""
 from __future__ import annotations
 
 import itertools as it
@@ -35,26 +35,15 @@ def sample_coord_region(
     coord: NDArray[np.int_], sampling_rate: int, multiplier: int = 1
 ) -> pl.DataFrame:
     return pl.DataFrame(
-        list(
-            it.product(
-                *[
-                    range(
-                        coord[0] - sampling_rate * multiplier,
-                        coord[0] + sampling_rate * multiplier + 1,
-                        multiplier,
-                    ),
-                    range(
-                        coord[1] - sampling_rate * multiplier,
-                        coord[1] + sampling_rate * multiplier + 1,
-                        multiplier,
-                    ),
-                    range(
-                        coord[2] - sampling_rate * multiplier,
-                        coord[2] + sampling_rate * multiplier + 1,
-                        multiplier,
-                    ),
-                ]
-            )
+        it.product(
+            *[
+                range(
+                    coord[idx] - sampling_rate * multiplier,
+                    coord[idx] + sampling_rate * multiplier + 1,
+                    multiplier,
+                )
+                for idx in range(3)
+            ]
         ),
         orient="row",
         schema=["x", "y", "z"],

@@ -289,13 +289,32 @@ class TestAfidsToJson:
     ) -> None:
         with tempfile.NamedTemporaryFile(
             mode="w",
+            delete=False,
             prefix="sub-test_desc-",
             suffix="_afids.json",
         ) as out_json_file:
-            afids_to_json(afids_coords, out_json_file.name)
+            out_json_fpath = out_json_file.name
+            afids_to_json(afids_coords, out_json_fpath)
 
             # Check file was created
-            assert Path(out_json_file.name).exists()
+            assert Path(out_json_fpath).exists()
+
+        # Check afids positions
+        with open(out_json_fpath, "r", encoding="utf-8") as f:
+            content = json.load(f)
+            for idx in range(afids_coords.shape[0]):
+                assert (
+                    content["markups"][0]["controlPoints"][idx]["position"]
+                ) == (
+                    [
+                        str(afids_coords[idx][0]),
+                        str(afids_coords[idx][1]),
+                        str(afids_coords[idx][2]),
+                    ]
+                )
+
+        # Delete created file
+        remove(out_json_fpath)
 
 
 class TestAfidsIOGeneral:

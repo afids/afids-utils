@@ -89,12 +89,12 @@ def get_afid(
     Raises
     ------
     ValueError
-        If description of fiducial to extract does not match expected 
+        If description of fiducial to extract does not match expected
         description
-    
+
     IOError
         If extension to fiducial file is not .fcsv or .json
-    
+
     """
     if fid_num < 1 or fid_num > 32:
         raise InvalidFiducialNumberError(

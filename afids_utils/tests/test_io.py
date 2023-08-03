@@ -139,7 +139,7 @@ class TestGetAfidJson:
         assert isinstance(afid, np.ndarray)
         # Check array values
         assert afid.dtype == np.single
- 
+
     @given(afid_num=st.integers(min_value=-1000, max_value=1000))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
@@ -150,12 +150,12 @@ class TestGetAfidJson:
         afid_num: int,
     ) -> None:
         assume(afid_num < 1 or afid_num > 32)
- 
+
         with pytest.raises(
             InvalidFiducialNumberError, match="Invalid fiducial number*."
         ):
             get_afid(valid_json_file, afid_num)
- 
+
     @given(
         afid_num=st.integers(min_value=1, max_value=32),
         desc=st.text(
@@ -178,10 +178,13 @@ class TestGetAfidJson:
         content["markups"][0]["controlPoints"][afid_num - 1][
             "description"
         ] = desc
-        
+
         # Write to temp file
         with tempfile.NamedTemporaryFile(
-            mode="w", delete=False, prefix="sub-test_desc-", suffix="_afids.json"
+            mode="w",
+            delete=False,
+            prefix="sub-test_desc-",
+            suffix="_afids.json",
         ) as out_json_file:
             json.dump(content, out_json_file, indent=4)
             out_file_path = out_json_file.name
@@ -190,7 +193,7 @@ class TestGetAfidJson:
         # Needs to be outside of context, otherwise JSONDecodeError thrown
         with pytest.raises(
             ValueError, match=".*does not match expected description"
-        ) as err:
+        ):
             get_afid(out_file_path, afid_num)
 
         remove(out_file_path)
@@ -211,7 +214,7 @@ class TestGetAfidJson:
     ) -> None:
         assume(not ext == "fcsv" or not ext == "json")
         invalid_file_ext = valid_json_file.with_suffix(f".{ext}")
- 
+
         with pytest.raises(IOError, match="Invalid file extension"):
             get_afid(invalid_file_ext, afid_num)
 

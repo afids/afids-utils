@@ -1,8 +1,15 @@
 """Custom exceptions"""
 
 
-class InvalidFiducialNumberError(Exception):
-    """Exception for invalid fiducial number"""
+class InvalidFileError(Exception):
+    """Exception raised when file to be parsed is invalid"""
 
-    def __init__(self, fid_num: int) -> None:
-        super().__init__(f"Provided fiducial {fid_num} is not valid.")
+    def __init__(self, message):
+        super().__init__(message)
+
+
+class InvalidFiducialError(Exception):
+    """Exception for invalid fiducial selection"""
+
+    def __init__(self, message) -> None:
+        super().__init__(message)

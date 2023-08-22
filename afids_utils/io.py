@@ -72,7 +72,6 @@ def load(
             .select("desc")
             .item()
         )
-
         if desc not in mappings['human'][label - 1]:
             raise InvalidFiducialError(
                 f"Description for label {label} does not match expected"
@@ -83,18 +82,17 @@ def load(
 
     return afids_set
 
-# TODO: Handle the metadata
+# TODO: Handle the metadata - specifically setting the coordinate system
 def save(
-    afids_coords: NDArray[np.single],
+    afids_set: AfidSet,
     out_fpath: PathLike[str] | str,
 ) -> None:
     """Save AFIDs to Slicer-compatible file
 
     Parameters
     ----------
-    afid_coords : numpy.ndarray[shape=(N, 3), dtype=numpy.single]
-        Floating-point NumPy array containing spatial coordinates (x, y, z) of
-        `N` AFIDs
+    afids_set
+        An AFID dataset containing metadata and coordinates
 
     fcsv_output : os.PathLike[str] | str
         Path of file (including filename and extension) to save AFIDs to
@@ -106,6 +104,8 @@ def save(
     """
 
     out_fpath_ext = Path(out_fpath).suffix
+
+    afids_coords = afids_set["afids"].select("x_mm", "y_mm", "z_mm").to_numpy()
 
     # Saving fcsv
     if out_fpath_ext == ".fcsv":

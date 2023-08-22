@@ -18,8 +18,6 @@ from afids_utils.io import load, save
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 from afids_utils.tests.strategies import afid_coords
 
-whitelist_strs = ['Lu', 'Ll', 'Lt']
-
 @pytest.fixture
 def valid_fcsv_file() -> PathLike[str]:
     return (
@@ -53,7 +51,9 @@ class TestLoad:
         ext=st.text(
             min_size=2, 
             max_size=5, 
-            alphabet=st.characters(whitelist_categories=whitelist_strs)
+            alphabet=st.characters(
+                min_codepoint=ord('A'), max_codepoint=ord('z')
+            )
         )
     )
     @settings(
@@ -89,11 +89,13 @@ class TestLoad:
 
 
     @given(
-        label=st.integers(min_value=0, max_value=31),
+        label=st.integers(min_value=1, max_value=32),
         desc=st.text(
             min_size=2,
             max_size=5,
-            alphabet=st.characters(whitelist_categories=whitelist_strs),
+            alphabet=st.characters(
+                min_codepoint=ord('A'), max_codepoint=ord('z')
+            ),
         ),
     )
     @settings(
@@ -106,15 +108,14 @@ class TestLoad:
         label: int, 
         desc: str
     ) -> None:
-        assume(desc not in human_mappings[label])
+        assume(desc not in human_mappings[label-1])
 
         # Replace valid description with a mismatch
         with open(valid_fcsv_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
-            fcsv_data[label+3] = fcsv_data[label+3].replace(
-                human_mappings[label][0], desc
+            fcsv_data[label+2] = fcsv_data[label+2].replace(
+                human_mappings[label-1][0], desc
             )
-            print(fcsv_data)
 
         # Write to temp file
         with tempfile.NamedTemporaryFile(
@@ -127,37 +128,38 @@ class TestLoad:
 
             # Test for description match error raised
             with pytest.raises(
-                InvalidFiducialError, match="Description for label .*"
+                InvalidFiducialError, match="Description for label.*"
             ):
                 load(out_fcsv_file.name)
 
 
 class TestSave:
-    @given(afids_coords=afid_coords())
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
-    def test_save_fcsv(self, afids_coords: NDArray[np.single]):
+    def test_save_fcsv(self, valid_fcsv_file: PathLike[str]):
         with tempfile.NamedTemporaryFile(
             mode="w",
             prefix="sub-test_desc-",
             suffix="_afids.fcsv"
         ) as out_fcsv_file:
-            save(afids_coords, out_fcsv_file.name)
+            afids_set = load(valid_fcsv_file)
+            save(afids_set, out_fcsv_file.name)
 
             assert Path(out_fcsv_file.name).exists()
 
     
     @given(
-        afids_coords=afid_coords(),
         ext=st.text(
             min_size=2, 
             max_size=5, 
-            alphabet=st.characters(whitelist_categories=whitelist_strs)
+            alphabet=st.characters(
+                min_codepoint=ord('A'), max_codepoint=ord('z')
+            )
         )
     )
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
     def test_save_invalid_ext(
-        self, afids_coords: NDArray[np.single], ext: str
+        self, valid_fcsv_file: PathLike[str], ext: str
     ):
         assume(not ext == "fcsv" or not ext == "json")
         
@@ -166,6 +168,6 @@ class TestSave:
             prefix="sub-test_desc-",
             suffix=f"_afids.{ext}"
         ) as out_file:
-
+            afids_set = load(valid_fcsv_file)
             with pytest.raises(IOError, match="Unsupported file extension"):
-                save(afids_coords, out_file.name)
+                save(afids_set, out_file.name)

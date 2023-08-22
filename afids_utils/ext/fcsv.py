@@ -139,7 +139,6 @@ def load_fcsv(
     return afids_set
 
 
-# TODO: Handle metadata - specifically setting the coordinate system
 def save_fcsv(
     afid_coords: NDArray[np.single],
     out_fcsv: PathLike[str] | str,

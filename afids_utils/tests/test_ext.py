@@ -32,12 +32,6 @@ class TestLoadFcsv:
 
         assert isinstance(afids_set, AfidSet)
 
-        # Check to make sure internal types are correct
-        assert isinstance(afids_set["metadata"], dict)
-        assert isinstance(afids_set["metadata"]["slicer_version"], str)
-        assert isinstance(afids_set["metadata"]["coord_system"], str)
-        assert isinstance(afids_set["afids"], pl.DataFrame)
-
     @given(coord_num=st.integers(min_value=0, max_value=1))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],

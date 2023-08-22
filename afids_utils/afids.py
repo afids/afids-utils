@@ -31,7 +31,7 @@ class AfidSet(dict):
         Parameters
         ----------
         label
-            Unique fiducial number to extract from
+            Unique AFID label to extract from
 
         Returns
         -------
@@ -50,12 +50,12 @@ class AfidSet(dict):
             # Fiducial selection out of bounds
             if label < 1 or label > len(self["afids"]):
                 raise InvalidFiducialError(
-                    f"Fiducial number {label} is not valid."
+                    f"AFID label {label} is not valid."
                 )
 
             return (
                 self["afids"]
-                .filter(pl.col("id") == str(label))
+                .filter(pl.col("label") == str(label))
                 .select("x_mm", "y_mm", "z_mm")
                 .to_numpy()[0]
             )

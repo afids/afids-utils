@@ -1,6 +1,7 @@
 """Methods for handling .fcsv files associated with AFIDs"""
 from __future__ import annotations
 
+import csv
 import json
 import re
 from importlib import resources
@@ -9,11 +10,28 @@ from os import PathLike
 from typing import Dict
 
 import polars as pl
+from numpy.typing import NDArray
 
 from afids_utils.afids import AfidSet
 from afids_utils.exceptions import InvalidFileError
 
 HEADER_ROWS: int = 2
+FCSV_FIELDNAMES = (
+    "# columns = id",
+    "x",
+    "y",
+    "z",
+    "ow",
+    "ox",
+    "oy",
+    "oz",
+    "vis",
+    "sel",
+    "lock",
+    "label",
+    "desc",
+    "associatedNodeID",
+)
 FCSV_COLS: Dict[str] = {
     "x": pl.Float32,
     "y": pl.Float32,
@@ -93,7 +111,7 @@ def _get_afids(fcsv_path: PathLike[str] | str) -> pl.DataFrame:
 
 
 def load_fcsv(
-    fcsv_path: PathLike[str] | str, species: str = "human"
+    fcsv_path: PathLike[str] | str,
 ) -> AfidSet:
     """
     Read in fcsv to an AfidSet
@@ -103,20 +121,11 @@ def load_fcsv(
     fcsv_path
         Path to .fcsv file containing AFIDs coordinates
 
-    species
-        The species associated with the .fcsv file (default: human)
-
     Returns
     -------
     AfidSet
         Set of anatomical fiducials containing spatial coordinates and metadata
     """
-    # Load expected mappings
-    with resources.open_text(
-        "afids_utils.resources", "afids_descs.json"
-    ) as json_fpath:
-        json.load(json_fpath)
-
     # Grab metadata
     slicer_version, coord_system = _get_metadata(fcsv_path)
 
@@ -128,3 +137,56 @@ def load_fcsv(
     )
 
     return afids_set
+
+
+# TODO: Handle metadata - specifically setting the coordinate system
+def save_fcsv(
+    afid_coords: NDArray[np.single],
+    out_fcsv: PathLike[str] | str,
+) -> None:
+    """
+    Save fiducials to output fcsv file
+
+    Parameters
+    ----------
+    afid_coords
+        Floating-point NumPy array containing spatial coordinates (x, y, z)
+
+    out_fcsv
+        Path of fcsv file to save AFIDs to
+
+    """
+    # Read in fcsv template
+    with resources.open_text(
+        "afids_utils.resources", "template.fcsv"
+    ) as template_fcsv_file:
+        header = [template_fcsv_file.readline() for _ in range(HEADER_ROWS+1)]
+        reader = csv.DictReader(template_fcsv_file, fieldnames=FCSV_FIELDNAMES)
+        fcsv = list(reader)
+
+    # Check to make sure shape of AFIDs array matches expected template
+    if afid_coords.shape[0] != len(fcsv):
+        raise TypeError(
+            f"Expected {len(fcsv)} AFIDs, but received {afid_coords.shape[0]}"
+        )
+    if afid_coords.shape[1] != 3:
+        raise TypeError(
+            "Expected 3 spatial dimensions (x, y, z),"
+            f"but received {afid_coords.shape[1]}"
+        )
+
+    # Loop over fiducials and update with fiducial spatial coordinates
+    for idx, row in enumerate(fcsv):
+        row["x"] = afid_coords[idx][0]
+        row["y"] = afid_coords[idx][1]
+        row["z"] = afid_coords[idx][2]
+
+    # Write output fcsv
+    with open(out_fcsv, "w", encoding="utf-8", newline="") as out_fcsv_file:
+        for line in header:
+            out_fcsv_file.write(line)
+        writer = csv.DictWriter(out_fcsv_file, fieldnames=FCSV_FIELDNAMES)
+
+        for row in fcsv:
+            writer.writerow(row)
+            

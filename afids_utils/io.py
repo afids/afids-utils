@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from os import PathLike
+from pathlib import Path
 
 from afids_utils.afids import AfidSet
-from afids_utils.extensions.fcsv import load_fcsv
+from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
+from afids_utils.ext.fcsv import load_fcsv
+
 
 def load(afids_fpath: PathLike[str] | str) -> AfidSet:
     """
@@ -24,6 +27,12 @@ def load(afids_fpath: PathLike[str] | str) -> AfidSet:
     ------
     IOError
         If extension to fiducial file is not .fcsv or .json or does not exist
+    
+    InvalidFileError
+        If fiducial file has none or more than expected number of fiducials
+
+    InvalidFiducialError
+        If description in fiducial file does not match expected
     """
     afids_fpath = Path(afids_fpath)
 
@@ -34,14 +43,39 @@ def load(afids_fpath: PathLike[str] | str) -> AfidSet:
     afids_fpath_ext = afids_fpath.suffix
 
     # Loading fcsv
-    if afids_fpath_ext = ".fcsv":
-        load_fcsv(afids_fpath)
+    if afids_fpath_ext == ".fcsv":
+        afids_set = load_fcsv(afids_fpath)
     # Loading json
     # if afids_fpath_ext = ".json":
     #   load_json(afids_path)
     else:
         raise IOError("Invalid file extension")
 
+    # Perform validation of loaded file
+    # Check fiducials exist and don't exceed expected number of fiducials
+    if len(afids_set["afids"]) < 1:
+        raise InvalidFileError("No fiducials exist")
+    if len(afids_set["afids"]) > len(mappings[species]):
+        raise InvalidFileError("More fiducials than expected")
+
+    # Validate descriptions, before dropping
+    for label in range(1, len(afids_set["afids"] + 1)):
+        desc = (
+            afids_set["afids"]
+            .filter(pl.col("label") == str(label))
+            .select("desc")
+            .item()
+        )
+
+        if desc not in mappings[species][label - 1]:
+            raise InvalidFiducialError(
+                f"Description for label {label} does not match expected"
+            )
+
+    # Drop description column
+    afids_set["afids"] = afids_set["afids"].drop("desc")
+
+    return afids_set
 
 
 # def afids_to_fcsv(

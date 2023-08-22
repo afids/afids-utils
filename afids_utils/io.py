@@ -2,14 +2,16 @@
 from __future__ import annotations
 
 import json
-import polars as pl
 from importlib import resources
 from os import PathLike
 from pathlib import Path
 
+import polars as pl
+
 from afids_utils.afids import AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 from afids_utils.ext.fcsv import load_fcsv, save_fcsv
+
 
 def load(
     afids_fpath: PathLike[str] | str,
@@ -31,7 +33,7 @@ def load(
     ------
     IOError
         If extension to fiducial file is not .fcsv or .json or does not exist
-    
+
     InvalidFileError
         If fiducial file has none or more than expected number of fiducials
 
@@ -41,7 +43,7 @@ def load(
     # Check if file exists
     afids_fpath = Path(afids_fpath)
     if not afids_fpath.exists():
-        raise IOError("Provided AFID file does not exist")
+        raise FileNotFoundError("Provided AFID file does not exist")
 
     afids_fpath_ext = afids_fpath.suffix
 
@@ -52,7 +54,7 @@ def load(
     # if afids_fpath_ext = ".json":
     #   load_json(afids_path)
     else:
-        raise IOError("Unsupported file extension")
+        raise ValueError("Unsupported file extension")
 
     # Perform validation of loaded file
     # Load expected mappings
@@ -61,7 +63,7 @@ def load(
     ) as json_fpath:
         mappings = json.load(json_fpath)
     # Check expected number of fiducials exist
-    if len(afids_set["afids"]) != len(mappings['human']):
+    if len(afids_set["afids"]) != len(mappings["human"]):
         raise InvalidFileError("Unexpected number of fiducials")
 
     # Validate descriptions, before dropping
@@ -72,7 +74,7 @@ def load(
             .select("desc")
             .item()
         )
-        if desc not in mappings['human'][label - 1]:
+        if desc not in mappings["human"][label - 1]:
             raise InvalidFiducialError(
                 f"Description for label {label} does not match expected"
             )
@@ -81,6 +83,7 @@ def load(
     afids_set["afids"] = afids_set["afids"].drop("desc")
 
     return afids_set
+
 
 # TODO: Handle the metadata - specifically setting the coordinate system
 def save(
@@ -114,4 +117,4 @@ def save(
     # if out_fpath_ext = ".json":
     #   save_json(afids_coords, out_fpath)
     else:
-        raise IOError("Unsupported file extension")
+        raise ValueError("Unsupported file extension")

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from os import PathLike
 from pathlib import Path
 
 import numpy as np
@@ -8,8 +9,8 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
-from afids_utils.io import load
 from afids_utils.exceptions import InvalidFiducialError
+from afids_utils.io import load
 
 
 @pytest.fixture
@@ -17,6 +18,7 @@ def valid_fcsv_file() -> PathLike[str]:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.fcsv"
     )
+
 
 class TestAfids:
     def test_init(self, valid_fcsv_file: PathLike[str]):
@@ -28,7 +30,6 @@ class TestAfids:
         assert isinstance(afids_set["metadata"]["slicer_version"], str)
         assert isinstance(afids_set["metadata"]["coord_system"], str)
         assert isinstance(afids_set["afids"], pl.DataFrame)
-
 
     @given(label=st.integers(min_value=1, max_value=32))
     @settings(
@@ -46,10 +47,12 @@ class TestAfids:
     @given(label=st.integers(min_value=-100, max_value=100))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )    
-    def test_invalid_get_afid(self, valid_fcsv_file: PathLike[str], label: int):
+    )
+    def test_invalid_get_afid(
+        self, valid_fcsv_file: PathLike[str], label: int
+    ):
         afids_set = load(valid_fcsv_file)
-        assume(not 1 <= label <= len(afids_set['afids']))
-        
+        assume(not 1 <= label <= len(afids_set["afids"]))
+
         with pytest.raises(InvalidFiducialError, match=".*not valid"):
             afids_set.get_afid(label)

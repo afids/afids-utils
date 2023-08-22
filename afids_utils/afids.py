@@ -49,9 +49,7 @@ class AfidSet(dict):
         if isinstance(label, int):
             # Fiducial selection out of bounds
             if label < 1 or label > len(self["afids"]):
-                raise InvalidFiducialError(
-                    f"AFID label {label} is not valid"
-                )
+                raise InvalidFiducialError(f"AFID label {label} is not valid")
 
             return (
                 self["afids"]

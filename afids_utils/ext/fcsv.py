@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import csv
-import json
 import re
 from importlib import resources
 from itertools import islice
 from os import PathLike
 from typing import Dict
 
+import numpy as np
 import polars as pl
 from numpy.typing import NDArray
 
@@ -159,7 +159,9 @@ def save_fcsv(
     with resources.open_text(
         "afids_utils.resources", "template.fcsv"
     ) as template_fcsv_file:
-        header = [template_fcsv_file.readline() for _ in range(HEADER_ROWS+1)]
+        header = [
+            template_fcsv_file.readline() for _ in range(HEADER_ROWS + 1)
+        ]
         reader = csv.DictReader(template_fcsv_file, fieldnames=FCSV_FIELDNAMES)
         fcsv = list(reader)
 
@@ -188,4 +190,3 @@ def save_fcsv(
 
         for row in fcsv:
             writer.writerow(row)
-            

@@ -7,6 +7,6 @@
 :hidden:
 :maxdepth: 1
 
-api/io
+api/afids
 api/transform
 ```

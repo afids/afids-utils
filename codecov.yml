@@ -9,15 +9,12 @@ coverage:
         threshold: 5%
 component_management:
   individual_components:
-    - component_id: afids-utils_io
-      name: afids_utils/io.py
-      paths: [afids_utils/io.py]
-    - component_id: afids-utils_ext
-      name: afids_utils/ext
-      paths: [afids_utils/ext/*.py]
     - component_id: afids-utils_afids
       name: afids_utils/afids.py
       paths: [afidS_utils/afids.py]
+    - component_id: afids-utils_ext
+      name: afids_utils/ext
+      paths: [afids_utils/ext/*.py]
     - component_id: afids-utils_transforms
       name: afids_utils/transforms.py
       paths: [afids_utils/transforms.py]

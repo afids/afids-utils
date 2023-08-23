@@ -1,7 +1,7 @@
 """Anatomical fiducial classes"""
 from __future__ import annotations
 
-import attr
+import attrs
 import numpy as np
 import polars as pl
 from numpy.typing import NDArray
@@ -9,13 +9,13 @@ from numpy.typing import NDArray
 from afids_utils.exceptions import InvalidFiducialError
 
 
-@attr.define
+@attrs.define
 class AfidSet(dict):
     """Base class for a set of fiducials"""
 
-    slicer_version: str = attr.field()
-    coord_system: str = attr.field()
-    afids_df: pl.DataFrame = attr.field()
+    slicer_version: str = attrs.field()
+    coord_system: str = attrs.field()
+    afids_df: pl.DataFrame = attrs.field()
 
     def __attrs_post_init__(self):
         self["metadata"] = {

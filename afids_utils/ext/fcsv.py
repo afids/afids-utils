@@ -2,10 +2,8 @@
 from __future__ import annotations
 
 import csv
-import io
 import re
 from importlib import resources
-from itertools import islice
 from os import PathLike
 
 from afids_utils.afids import AfidPosition
@@ -30,7 +28,7 @@ FCSV_FIELDNAMES: tuple[str] = (
 )
 
 
-def _get_metadata(in_fcsv: io.TextIO) -> tuple[str, str]:
+def _get_metadata(in_fcsv: list[str]) -> tuple[str, str]:
     """
     Internal function to extract metadata from header of fcsv files
 
@@ -53,7 +51,7 @@ def _get_metadata(in_fcsv: io.TextIO) -> tuple[str, str]:
         If header is missing or invalid from .fcsv file
     """
     try:
-        header = list(islice(in_fcsv, HEADER_ROWS))
+        header = in_fcsv[:HEADER_ROWS+1]
 
         # Parse version and coordinate system
         parsed_version = re.findall(r"\d+\.\d+", header[0])[0]
@@ -74,7 +72,7 @@ def _get_metadata(in_fcsv: io.TextIO) -> tuple[str, str]:
     return parsed_version, parsed_coord
 
 
-def _get_afids(in_fcsv: io.TextIO) -> list[AfidPosition]:
+def _get_afids(in_fcsv: list[str]) -> list[AfidPosition]:
     """
     Internal function for converting .fcsv file to a pl.DataFrame
 
@@ -89,7 +87,7 @@ def _get_afids(in_fcsv: io.TextIO) -> list[AfidPosition]:
         List containing spatial position of afids
     """
     # Read in AFIDs from fcsv (set to start from 1 to skip header fields)
-    afids = list(islice(in_fcsv, 1, None))
+    afids = in_fcsv[HEADER_ROWS+1:]
 
     # Add to list of AfidPosition
     afids_positions = []
@@ -130,11 +128,13 @@ def load_fcsv(
     afids_positions
         List containing spatial position of afids
     """
-    with open(fcsv_path) as in_fcsv:
-        # Grab metadata
-        slicer_version, coord_system = _get_metadata(in_fcsv)
-        # Grab afids
-        afids_positions = _get_afids(in_fcsv)
+    with open(fcsv_path) as in_fcsv_fpath:
+        in_fcsv = in_fcsv_fpath.readlines()
+
+    # Grab metadata
+    slicer_version, coord_system = _get_metadata(in_fcsv)
+    # Grab afids
+    afids_positions = _get_afids(in_fcsv)
 
     return slicer_version, coord_system, afids_positions
 

@@ -53,7 +53,9 @@ class TestLoadFcsv:
             temp_valid_fcsv_file.flush()
 
             with open(temp_valid_fcsv_file.name) as temp_in_fcsv:
-                parsed_ver, parsed_coord = _get_metadata(temp_in_fcsv)
+               parsed_ver, parsed_coord = _get_metadata(
+                   temp_in_fcsv.readlines()
+                )
 
         # Check version pattern matches expected
         ver_regex = re.compile(r"\d+\.\d+")
@@ -90,8 +92,8 @@ class TestLoadFcsv:
             with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
-                ):
-                    _get_metadata(temp_in_fcsv)
+                ):        
+                    _get_metadata(temp_in_fcsv.readlines())
 
     @given(
         coord_str=st.text(
@@ -124,11 +126,11 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.writelines(fcsv_data)
             temp_invalid_fcsv_file.flush()
 
-            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
+            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:                
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
                 ):
-                    _get_metadata(temp_in_fcsv)
+                    _get_metadata(temp_in_fcsv.readlines())
 
     def test_invalid_header(self, valid_fcsv_file: PathLike[str]):
         with open(valid_fcsv_file) as valid_fcsv:
@@ -143,8 +145,9 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.writelines(invalid_fcsv_data)
             temp_invalid_fcsv_file.flush()
 
-            with pytest.raises(InvalidFileError, match="Missing or invalid.*"):
-                _get_metadata(temp_invalid_fcsv_file.name)
+            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
+                with pytest.raises(InvalidFileError, match="Missing or invalid.*"):
+                    _get_metadata(temp_in_fcsv.readlines())
 
     @given(label=st.integers(min_value=0, max_value=31))
     @settings(
@@ -152,7 +155,7 @@ class TestLoadFcsv:
     )
     def test_valid_get_afids(self, valid_fcsv_file: PathLike[str], label: int):
         with open(valid_fcsv_file) as valid_fcsv:
-            afids_positions = _get_afids(valid_fcsv)
+            afids_positions = _get_afids(valid_fcsv.readlines())
 
         assert isinstance(afids_positions, list)
         assert isinstance(afids_positions[label], AfidPosition)

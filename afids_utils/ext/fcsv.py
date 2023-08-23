@@ -51,7 +51,7 @@ def _get_metadata(in_fcsv: list[str]) -> tuple[str, str]:
         If header is missing or invalid from .fcsv file
     """
     try:
-        header = in_fcsv[:HEADER_ROWS+1]
+        header = in_fcsv[: HEADER_ROWS + 1]
 
         # Parse version and coordinate system
         parsed_version = re.findall(r"\d+\.\d+", header[0])[0]
@@ -87,7 +87,7 @@ def _get_afids(in_fcsv: list[str]) -> list[AfidPosition]:
         List containing spatial position of afids
     """
     # Read in AFIDs from fcsv (set to start from 1 to skip header fields)
-    afids = in_fcsv[HEADER_ROWS+1:]
+    afids = in_fcsv[HEADER_ROWS + 1 :]
 
     # Add to list of AfidPosition
     afids_positions = []

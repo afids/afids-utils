@@ -53,8 +53,8 @@ class TestLoadFcsv:
             temp_valid_fcsv_file.flush()
 
             with open(temp_valid_fcsv_file.name) as temp_in_fcsv:
-               parsed_ver, parsed_coord = _get_metadata(
-                   temp_in_fcsv.readlines()
+                parsed_ver, parsed_coord = _get_metadata(
+                    temp_in_fcsv.readlines()
                 )
 
         # Check version pattern matches expected
@@ -92,7 +92,7 @@ class TestLoadFcsv:
             with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
-                ):        
+                ):
                     _get_metadata(temp_in_fcsv.readlines())
 
     @given(
@@ -126,7 +126,7 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.writelines(fcsv_data)
             temp_invalid_fcsv_file.flush()
 
-            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:                
+            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
                 ):
@@ -146,7 +146,9 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.flush()
 
             with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
-                with pytest.raises(InvalidFileError, match="Missing or invalid.*"):
+                with pytest.raises(
+                    InvalidFileError, match="Missing or invalid.*"
+                ):
                     _get_metadata(temp_in_fcsv.readlines())
 
     @given(label=st.integers(min_value=0, max_value=31))

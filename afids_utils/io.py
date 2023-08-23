@@ -97,7 +97,7 @@ def save(
     afids_set
         An AFID dataset containing metadata and coordinates
 
-    fcsv_output : os.PathLike[str] | str
+    out_fpath
         Path of file (including filename and extension) to save AFIDs to
 
     Raises

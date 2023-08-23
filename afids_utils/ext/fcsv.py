@@ -2,21 +2,17 @@
 from __future__ import annotations
 
 import csv
+import io
 import re
 from importlib import resources
 from itertools import islice
 from os import PathLike
-from typing import Dict
 
-import numpy as np
-import polars as pl
-from numpy.typing import NDArray
-
-from afids_utils.afids import AfidSet
+from afids_utils.afids import AfidPosition
 from afids_utils.exceptions import InvalidFileError
 
 HEADER_ROWS: int = 2
-FCSV_FIELDNAMES = (
+FCSV_FIELDNAMES: tuple[str] = (
     "# columns = id",
     "x",
     "y",
@@ -32,23 +28,16 @@ FCSV_FIELDNAMES = (
     "desc",
     "associatedNodeID",
 )
-FCSV_COLS: Dict[str] = {
-    "x": pl.Float32,
-    "y": pl.Float32,
-    "z": pl.Float32,
-    "label": pl.Utf8,
-    "desc": pl.Utf8,
-}
 
 
-def _get_metadata(fcsv_path: PathLike[str] | str) -> tuple[str, str]:
+def _get_metadata(in_fcsv: io.TextIO) -> tuple[str, str]:
     """
     Internal function to extract metadata from header of fcsv files
 
     Parameters
     ----------
-    fcsv_path
-        Path to .fcsv file containing AFIDs coordinates
+    in_fcsv
+        Data from provided fcsv file to parse metadata from
 
     Returns
     -------
@@ -64,15 +53,16 @@ def _get_metadata(fcsv_path: PathLike[str] | str) -> tuple[str, str]:
         If header is missing or invalid from .fcsv file
     """
     try:
-        with open(fcsv_path, "r") as fcsv:
-            header = list(islice(fcsv, HEADER_ROWS))
+        header = list(islice(in_fcsv, HEADER_ROWS))
 
+        # Parse version and coordinate system
         parsed_version = re.findall(r"\d+\.\d+", header[0])[0]
         parsed_coord = re.split(r"\s", header[1])[-2]
+
     except IndexError:
         raise InvalidFileError("Missing or invalid header in .fcsv file")
 
-    # Set to human-understandable coordinate system
+    # Transform coordinate system so human-understandable
     if parsed_coord == "0":
         parsed_coord = "LPS"
     elif parsed_coord == "1":
@@ -84,35 +74,43 @@ def _get_metadata(fcsv_path: PathLike[str] | str) -> tuple[str, str]:
     return parsed_version, parsed_coord
 
 
-def _get_afids(fcsv_path: PathLike[str] | str) -> pl.DataFrame:
+def _get_afids(in_fcsv: io.TextIO) -> list[AfidPosition]:
     """
     Internal function for converting .fcsv file to a pl.DataFrame
 
     Parameters
     ----------
-    fcsv_path
-        Path to .fcsv file containing AFID coordinates
+    in_fcsv
+        Data from provided fcsv file to parse metadata from
 
     Returns
     -------
-    pl.DataFrame
-        Dataframe containing afids ids, descriptions, and coordinates
+    afid_positions
+        List containing spatial position of afids
     """
-    # Read in fiducials to dataframe, shortening id header
-    afids_df = pl.read_csv(
-        fcsv_path,
-        skip_rows=HEADER_ROWS,
-        columns=list(FCSV_COLS.keys()),
-        new_columns=["x_mm", "y_mm", "z_mm"],
-        dtypes=FCSV_COLS,
-    )
+    # Read in AFIDs from fcsv (set to start from 1 to skip header fields)
+    afids = list(islice(in_fcsv, 1, None))
 
-    return afids_df
+    # Add to list of AfidPosition
+    afids_positions = []
+    for afid in afids:
+        afid = afid.split(",")
+        afids_positions.append(
+            AfidPosition(
+                label=int(afid[-3]),
+                x=float(afid[1]),
+                y=float(afid[2]),
+                z=float(afid[3]),
+                desc=afid[-2],
+            )
+        )
+
+    return afids_positions
 
 
 def load_fcsv(
     fcsv_path: PathLike[str] | str,
-) -> AfidSet:
+) -> tuple[str, str, list[AfidPosition]]:
     """
     Read in fcsv to an AfidSet
 
@@ -123,24 +121,26 @@ def load_fcsv(
 
     Returns
     -------
-    AfidSet
-        Set of anatomical fiducials containing spatial coordinates and metadata
+    slicer_version
+        Slicer version associated with fiducial file
+
+    coord_system
+        Coordinate system of fiducials
+
+    afids_positions
+        List containing spatial position of afids
     """
-    # Grab metadata
-    slicer_version, coord_system = _get_metadata(fcsv_path)
+    with open(fcsv_path) as in_fcsv:
+        # Grab metadata
+        slicer_version, coord_system = _get_metadata(in_fcsv)
+        # Grab afids
+        afids_positions = _get_afids(in_fcsv)
 
-    # Grab afids
-    afids_set = AfidSet(
-        slicer_version=slicer_version,
-        coord_system=coord_system,
-        afids_df=_get_afids(fcsv_path),
-    )
-
-    return afids_set
+    return slicer_version, coord_system, afids_positions
 
 
 def save_fcsv(
-    afid_coords: NDArray[np.single],
+    afid_coords: list[AfidPosition],
     out_fcsv: PathLike[str] | str,
 ) -> None:
     """
@@ -149,11 +149,15 @@ def save_fcsv(
     Parameters
     ----------
     afid_coords
-        Floating-point NumPy array containing spatial coordinates (x, y, z)
+        List of AFID spatial positions
 
     out_fcsv
         Path of fcsv file to save AFIDs to
 
+    Raises
+    ------
+    TypeError
+        If number of fiducials to write does not match expected number
     """
     # Read in fcsv template
     with resources.open_text(
@@ -166,21 +170,16 @@ def save_fcsv(
         fcsv = list(reader)
 
     # Check to make sure shape of AFIDs array matches expected template
-    if afid_coords.shape[0] != len(fcsv):
+    if len(afid_coords) != len(fcsv):
         raise TypeError(
-            f"Expected {len(fcsv)} AFIDs, but received {afid_coords.shape[0]}"
-        )
-    if afid_coords.shape[1] != 3:
-        raise TypeError(
-            "Expected 3 spatial dimensions (x, y, z),"
-            f"but received {afid_coords.shape[1]}"
+            f"Expected {len(fcsv)} AFIDs, but received {len(afid_coords)}"
         )
 
     # Loop over fiducials and update with fiducial spatial coordinates
     for idx, row in enumerate(fcsv):
-        row["x"] = afid_coords[idx][0]
-        row["y"] = afid_coords[idx][1]
-        row["z"] = afid_coords[idx][2]
+        row["x"] = afid_coords[idx].x
+        row["y"] = afid_coords[idx].y
+        row["z"] = afid_coords[idx].z
 
     # Write output fcsv
     with open(out_fcsv, "w", encoding="utf-8", newline="") as out_fcsv_file:

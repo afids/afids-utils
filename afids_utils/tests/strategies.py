@@ -5,6 +5,8 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
+from afids_utils.afids import AfidPosition
+
 
 @st.composite
 def afid_coords(
@@ -13,28 +15,41 @@ def afid_coords(
     max_value: float = 50.0,
     width: int = 16,
     bad_range: bool = False,
-    bad_dims: bool = False,
-) -> NDArray[np.single]:
-    # Set (in)valid dimensions for array containing AFID coords
-    num_afids, spatial_dims = 32, 3
-    if bad_range:
-        num_afids = draw(
+) -> list[AfidPosition]:
+    # Set (in)valid number of Afid coordinates for array containing AFID coords
+    num_afids = (
+        32
+        if not bad_range
+        else draw(
             st.integers(min_value=0, max_value=100).filter(lambda x: x != 32)
         )
-    if bad_dims:
-        spatial_dims = draw(
-            st.integers(min_value=0, max_value=10).filter(lambda x: x != 3)
+    )
+
+    afid_pos = []
+    for afid in range(num_afids):
+        afid_pos.append(
+            AfidPosition(
+                label=afid + 1,
+                x=draw(
+                    st.floats(
+                        min_value=min_value, max_value=max_value, width=width
+                    )
+                ),
+                y=draw(
+                    st.floats(
+                        min_value=min_value, max_value=max_value, width=width
+                    )
+                ),
+                z=draw(
+                    st.floats(
+                        min_value=min_value, max_value=max_value, width=width
+                    )
+                ),
+                desc="",
+            )
         )
 
-    return draw(
-        arrays(
-            shape=(num_afids, spatial_dims),
-            dtype=np.single,
-            elements=st.floats(
-                min_value=min_value, max_value=max_value, width=width
-            ),
-        )
-    )
+    return afid_pos
 
 
 @st.composite

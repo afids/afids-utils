@@ -6,18 +6,16 @@ import tempfile
 from os import PathLike
 from pathlib import Path
 
-import numpy as np
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
-from numpy.typing import NDArray
 
-from afids_utils.afids import AfidSet
+from afids_utils.afids import AfidPosition
 from afids_utils.exceptions import InvalidFileError
 from afids_utils.ext.fcsv import (
     FCSV_FIELDNAMES,
+    _get_afids,
     _get_metadata,
-    load_fcsv,
     save_fcsv,
 )
 from afids_utils.tests.strategies import afid_coords
@@ -31,11 +29,6 @@ def valid_fcsv_file() -> PathLike[str]:
 
 
 class TestLoadFcsv:
-    def test_load_valid_fcsv(self, valid_fcsv_file: PathLike[str]):
-        afids_set = load_fcsv(valid_fcsv_file)
-
-        assert isinstance(afids_set, AfidSet)
-
     @given(coord_num=st.integers(min_value=0, max_value=1))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
@@ -59,7 +52,8 @@ class TestLoadFcsv:
             temp_valid_fcsv_file.writelines(valid_fcsv_data)
             temp_valid_fcsv_file.flush()
 
-            parsed_ver, parsed_coord = _get_metadata(temp_valid_fcsv_file.name)
+            with open(temp_valid_fcsv_file.name) as temp_in_fcsv:
+                parsed_ver, parsed_coord = _get_metadata(temp_in_fcsv)
 
         # Check version pattern matches expected
         ver_regex = re.compile(r"\d+\.\d+")
@@ -93,13 +87,18 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.writelines(fcsv_data)
             temp_invalid_fcsv_file.flush()
 
-            with pytest.raises(InvalidFileError, match="Invalid coordinate.*"):
-                _get_metadata(temp_invalid_fcsv_file.name)
+            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
+                with pytest.raises(
+                    InvalidFileError, match="Invalid coordinate.*"
+                ):
+                    _get_metadata(temp_in_fcsv)
 
     @given(
         coord_str=st.text(
             min_size=3,
-            alphabet=st.characters(whitelist_categories=["Lu", "Ll", "Lt"]),
+            alphabet=st.characters(
+                min_codepoint=ord("A"), max_codepoint=ord("z")
+            ),
         )
     )
     @settings(
@@ -125,8 +124,11 @@ class TestLoadFcsv:
             temp_invalid_fcsv_file.writelines(fcsv_data)
             temp_invalid_fcsv_file.flush()
 
-            with pytest.raises(InvalidFileError, match="Invalid coordinate.*"):
-                _get_metadata(temp_invalid_fcsv_file.name)
+            with open(temp_invalid_fcsv_file.name) as temp_in_fcsv:
+                with pytest.raises(
+                    InvalidFileError, match="Invalid coordinate.*"
+                ):
+                    _get_metadata(temp_in_fcsv)
 
     def test_invalid_header(self, valid_fcsv_file: PathLike[str]):
         with open(valid_fcsv_file) as valid_fcsv:
@@ -144,11 +146,27 @@ class TestLoadFcsv:
             with pytest.raises(InvalidFileError, match="Missing or invalid.*"):
                 _get_metadata(temp_invalid_fcsv_file.name)
 
+    @given(label=st.integers(min_value=0, max_value=31))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_valid_get_afids(self, valid_fcsv_file: PathLike[str], label: int):
+        with open(valid_fcsv_file) as valid_fcsv:
+            afids_positions = _get_afids(valid_fcsv)
+
+        assert isinstance(afids_positions, list)
+        assert isinstance(afids_positions[label], AfidPosition)
+
 
 class TestSaveFcsv:
     @given(afids_coords=afid_coords())
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
     def test_save_fcsv_invalid_template(
-        self, afids_coords: NDArray[np.single]
+        self,
+        afids_coords: list[AfidPosition],
+        valid_fcsv_file: PathLike[str],
     ):
         with pytest.raises(FileNotFoundError):
             save_fcsv(afids_coords, "/invalid/template/path.fcsv")
@@ -159,7 +177,7 @@ class TestSaveFcsv:
     )
     def test_save_fcsv_valid_template(
         self,
-        afids_coords: NDArray[np.single],
+        afids_coords: list[AfidPosition],
         valid_fcsv_file: PathLike[str],
     ):
         with tempfile.NamedTemporaryFile(
@@ -188,13 +206,13 @@ class TestSaveFcsv:
             # Check contents
             for idx, row in enumerate(output_fcsv):
                 assert (row["x"], row["y"], row["z"]) == (
-                    str(afids_coords[idx][0]),
-                    str(afids_coords[idx][1]),
-                    str(afids_coords[idx][2]),
+                    str(afids_coords[idx].x),
+                    str(afids_coords[idx].y),
+                    str(afids_coords[idx].z),
                 )
 
     @given(afids_coords=afid_coords(bad_range=True))
-    def test_invalid_num_afids(self, afids_coords: NDArray[np.single]) -> None:
+    def test_invalid_num_afids(self, afids_coords: list[AfidPosition]) -> None:
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
@@ -202,15 +220,3 @@ class TestSaveFcsv:
                 save_fcsv(afids_coords, out_fcsv_file)
 
             assert "AFIDs, but received" in str(err.value)
-
-    @given(afids_coords=afid_coords(bad_dims=True))
-    def test_invalid_afids_dims(
-        self, afids_coords: NDArray[np.single]
-    ) -> None:
-        with tempfile.NamedTemporaryFile(
-            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
-        ) as out_fcsv_file:
-            with pytest.raises(TypeError) as err:
-                save_fcsv(afids_coords, out_fcsv_file)
-
-            assert "Expected 3 spatial dimensions" in str(err.value)

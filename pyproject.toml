@@ -12,8 +12,8 @@ exclude = ["afids_utils/tests"]
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
+attrs = "^23.1.0"
 numpy = "^1.24.3"
-polars = {extras = ["numpy"], version = "^0.18.3"}
 
 [tool.poetry.group.dev]
 optional = true
@@ -42,7 +42,6 @@ ruff-check = "ruff afids_utils"
 quality = ["yamlfix", "isort", "black", "ruff"]
 quality-check = ["yamlfix-check", "isort-check", "black-check", "ruff-check"]
 test = "pytest --doctest-modules afids_utils/tests"
-test_cov = "pytest --doctest-modules --cov=afids_utils afids_utils/tests/ --cov-report xml:../cov.xml"
 
 [tool.coverage]
 omit = "afids_utils/tests/*"
@@ -73,4 +72,10 @@ shell = """
 find . -type f \\( \
     -iname \\*.yaml -o -iname \\*.yml \
 \\) -exec yamlfix --check {} \\;
+"""
+
+[tool.poe.tasks.test_cov]
+shell = """
+pytest --doctest-modules --cov=afids_utils afids_utils/tests/ \
+--cov-report xml:../cov.xml
 """

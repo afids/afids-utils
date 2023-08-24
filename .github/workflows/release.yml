@@ -8,7 +8,7 @@ on:
         required: false
 jobs:
   release-package:
-    uses: afids/actions/.github/workflows/release.yml@main
+    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@main
     with:
       comments: ${{ github.event.inputs.comments }}
     secrets:

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "afids-utils"
-version = "0.1.0-pre.7"
+version = "0.1.0"
 description = "Utility functions for working with AFIDs data / workflows"
 authors = ["Jason Kai <tkai@uwo.ca>"]
 license = "MIT"

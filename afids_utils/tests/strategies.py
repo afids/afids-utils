@@ -5,18 +5,22 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
-from afids_utils.afids import AfidPosition
+from afids_utils.afids import AfidPosition, AfidSet
 
 
 @st.composite
-def afid_coords(
+def afid_set(
     draw: st.DrawFn,
     min_value: float = -50.0,
     max_value: float = 50.0,
     width: int = 16,
     bad_range: bool = False,
 ) -> list[AfidPosition]:
-    # Set (in)valid number of Afid coordinates for array containing AFID coords
+    slicer_version = draw(st.from_regex(r"\d+\.\d+"))
+    coord_system = draw(st.sampled_from(["LPS", "RAS", "0", "1"]))
+
+    # Set (in)valid number of Afid coordinates in a list
+    afid_pos = []
     num_afids = (
         32
         if not bad_range
@@ -24,8 +28,6 @@ def afid_coords(
             st.integers(min_value=0, max_value=100).filter(lambda x: x != 32)
         )
     )
-
-    afid_pos = []
     for afid in range(num_afids):
         afid_pos.append(
             AfidPosition(
@@ -49,7 +51,14 @@ def afid_coords(
             )
         )
 
-    return afid_pos
+    # Create AfidSet
+    st_afid_set = AfidSet(
+        slicer_version=slicer_version,
+        coord_system=coord_system,
+        afids=afid_pos,
+    )
+
+    return st_afid_set
 
 
 @st.composite

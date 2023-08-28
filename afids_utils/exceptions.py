@@ -1,4 +1,4 @@
-"""Custom exceptions"""
+"""Custom exceptions to raise for various errors"""
 
 
 class InvalidFileError(Exception):
@@ -11,5 +11,5 @@ class InvalidFileError(Exception):
 class InvalidFiducialError(Exception):
     """Exception for invalid fiducial selection"""
 
-    def __init__(self, message) -> None:
+    def __init__(self, message):
         super().__init__(message)

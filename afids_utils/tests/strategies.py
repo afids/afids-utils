@@ -15,6 +15,7 @@ def afid_set(
     max_value: float = 50.0,
     width: int = 16,
     bad_range: bool = False,
+    randomize_coord: bool = True,
 ) -> list[AfidPosition]:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))
     coord_system = draw(st.sampled_from(["LPS", "RAS", "0", "1"]))
@@ -54,7 +55,7 @@ def afid_set(
     # Create AfidSet
     st_afid_set = AfidSet(
         slicer_version=slicer_version,
-        coord_system=coord_system,
+        coord_system=coord_system if randomize_coord else "0",
         afids=afid_pos,
     )
 

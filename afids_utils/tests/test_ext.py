@@ -173,20 +173,20 @@ class TestSaveFcsv:
         afids_set: AfidSet,
     ):
         with pytest.raises(FileNotFoundError):
-            save_fcsv(afids_set.afids, "/invalid/template/path.fcsv")
+            save_fcsv(afids_set, "/invalid/template/path.fcsv")
 
-    @given(afids_set=afid_set())
+    @given(afids_set=afid_set(randomize_coord=False))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_save_fcsv_valid_template(
-        self, afids_set: list[AfidPosition], valid_fcsv_file: PathLike[str]
+        self, afids_set: AfidSet, valid_fcsv_file: PathLike[str]
     ):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
             # Create and check output file
-            save_fcsv(afids_set.afids, out_fcsv_file.name)
+            save_fcsv(afids_set, out_fcsv_file.name)
 
             # Load files
             with open(
@@ -218,11 +218,11 @@ class TestSaveFcsv:
             assert isinstance(test_load, AfidSet)
 
     @given(afids_set=afid_set(bad_range=True))
-    def test_invalid_num_afids(self, afids_set: list[AfidPosition]) -> None:
+    def test_invalid_num_afids(self, afids_set: AfidSet) -> None:
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
             with pytest.raises(TypeError) as err:
-                save_fcsv(afids_set.afids, out_fcsv_file)
+                save_fcsv(afids_set, out_fcsv_file.name)
 
             assert "AFIDs, but received" in str(err.value)

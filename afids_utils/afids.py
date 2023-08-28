@@ -11,9 +11,27 @@ import attrs
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class AfidPosition:
-    """Base class for a single AFID position"""
+    """Base class for a single AFID position
+
+    Parameters
+    ----------
+    label
+        Unique label for AFID
+
+    x
+        Spatial position along x-axis (in mm)
+
+    y
+        Spatial position along y-axis (in mm)
+
+    z
+        Spatial position along z-axis (in mm)
+
+    desc
+        Description for AFID (e.g. AC, PC)
+    """
 
     label: int = attrs.field()
     x: float = attrs.field()
@@ -22,9 +40,21 @@ class AfidPosition:
     desc: str = attrs.field()
 
 
-@attrs.define
+@attrs.define(kw_only=True)
 class AfidSet:
-    """Base class for a set of AFIDs"""
+    """Base class for a set of AFIDs
+
+    Parameters
+    ----------
+    slicer_version
+        Version of Slicer associated with AfidSet
+
+    coord_system
+        Coordinate system AFIDs are placed in (e.g. RAS)
+
+    afids
+        List of AFID labels and their coordinates
+    """
 
     slicer_version: str = attrs.field()
     coord_system: str = attrs.field()

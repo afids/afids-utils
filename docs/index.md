@@ -7,6 +7,14 @@
 :hidden:
 :maxdepth: 1
 
-api/io
+api/afids
 api/transform
+```
+```{toctree}
+:caption: Exceptions
+:name: afids_exceptions
+:hidden:
+:maxdepth: 1
+
+exceptions/exceptions
 ```

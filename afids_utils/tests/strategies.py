@@ -134,25 +134,60 @@ def afid_sets(
 
 
 @st.composite
-def world_coord(
+def world_coords(
     draw: st.DrawFn,
     min_value: float = -50.0,
     max_value: float = 50.0,
     width: int = 16,
-) -> NDArray[np.single]:
-    return draw(
-        arrays(
-            shape=(3, 1),
-            dtype=np.single,
-            elements=st.floats(
-                min_value=min_value, max_value=max_value, width=width
-            ),
-        )
+) -> AfidPosition:
+    return AfidPosition(
+        label=draw(st.integers(min_value=1, max_value=32)),
+        x=draw(
+            st.floats(min_value=min_value, max_value=max_value, width=width)
+        ),
+        y=draw(
+            st.floats(min_value=min_value, max_value=max_value, width=width)
+        ),
+        z=draw(
+            st.floats(min_value=min_value, max_value=max_value, width=width)
+        ),
+        desc=draw(
+            st.text(
+                min_size=3,
+                max_size=10,
+                alphabet=st.characters(
+                    min_codepoint=ord("A"), max_codepoint=ord("z")
+                ),
+            )
+        ),
     )
 
 
 @st.composite
-def affine_xfm(
+def voxel_coords(
+    draw: st.DrawFn,
+    min_value: int = -50,
+    max_value: int = 50,
+) -> AfidPosition:
+    return AfidPosition(
+        label=draw(st.integers(min_value=1, max_value=32)),
+        i=draw(st.integers(min_value=min_value, max_value=max_value)),
+        j=draw(st.integers(min_value=min_value, max_value=max_value)),
+        k=draw(st.integers(min_value=min_value, max_value=max_value)),
+        desc=draw(
+            st.text(
+                min_size=3,
+                max_size=10,
+                alphabet=st.characters(
+                    min_codepoint=ord("A"), max_codepoint=ord("z")
+                ),
+            )
+        ),
+    )
+
+
+@st.composite
+def affine_xfms(
     draw: st.DrawFn,
 ) -> NDArray[np.single]:
     affine = np.eye(4)

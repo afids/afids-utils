@@ -4,35 +4,83 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
+from afids_utils.afids import AfidPosition, AfidVoxel
 
-def afid_world2voxel(
-    afid_world: NDArray[np.float_],
+
+def world_to_voxel(
+    afid_world: AfidPosition,
     nii_affine: NDArray[np.float_],
-) -> NDArray[np.int_]:
+) -> AfidVoxel:
     """
     Transform fiducials from world coordinates to voxel coordinates
 
     Parameters
     ----------
-    afid_world : numpy.ndarray[shape=(3,), dtype=numpy.float_]
-        NumPy array containing floating-point spatial coordinates (x, y, z) to
-        transform
+    afid_world
+        AfidPosition containing floating-point spatial coordinates (x, y, z)
+        to transform
 
-    nii_affine : numpy.ndarray[shape=(4, 4), dtype=numpy.float_]
+    nii_affine
         NumPy array containing affine transformation associated with
         NifTI image
 
     Returns
     -------
-    numpy.ndarray[shape=(3,), dtype=numpy.float_]
-        NumPy array containing indices corresponding to voxel location along
-        spatial dimensions
+    AfidVoxel
+        Object containing transformed integer voxel coordinates (i, j, k)
     """
 
-    # Translation
-    afid_voxel = afid_world.T - nii_affine[:3, 3:4]
-    # Rotation
-    afid_voxel = np.dot(afid_voxel, np.linalg.inv(nii_affine[:3, :3]))
+    # Put into numpy array for easier computation
+    world_pos = np.asarray([afid_world.x, afid_world.y, afid_world.z])
 
-    # Return coordinates rounded to nearest voxel
-    return np.rint(np.diag(afid_voxel)).astype(int)
+    # Translation, rotation, and round to nearest voxel
+    voxel_pos = world_pos.T - nii_affine[:3, 3:4]
+    voxel_pos = np.dot(voxel_pos, np.linalg.inv(nii_affine[:3, :3]))
+    voxel_pos = np.rint(np.diag(voxel_pos)).astype(int)
+
+    return AfidVoxel(
+        label=afid_world.label,
+        i=voxel_pos[0],
+        j=voxel_pos[1],
+        k=voxel_pos[2],
+        desc=afid_world.desc,
+    )
+
+
+def voxel_to_world(
+    afid_voxel: AfidVoxel,
+    nii_affine: NDArray[np.float_],
+) -> AfidPosition:
+    """
+    Transform fiducials from world coordinates to voxel coordinates
+
+    Parameters
+    ----------
+    afid_voxel
+        AfidVoxel containing integer voxel coordinates (i, j, k)
+
+    nii_affine
+        NumPy array containing affine transformation associated with
+        NifTI image
+
+    Returns
+    -------
+    AfidPosition
+        Object containing approximate floating-point spatial coordinates
+        (x, y, z)
+    """
+
+    # Put into numpy array for easier computation
+    voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k, 1])
+
+    # Convert to float, perform rotation, translation
+    world_pos = np.dot(nii_affine[:3, :3], voxel_pos)
+    world_pos = world_pos + nii_affine[:3, 3:4]
+
+    return AfidPosition(
+        label=afid_voxel.label,
+        x=world_pos[0],
+        y=world_pos[1],
+        z=world_pos[2],
+        desc=afid_voxel.desc,
+    )

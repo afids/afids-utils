@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import re
 import tempfile
 from os import PathLike
@@ -12,13 +11,8 @@ from hypothesis import strategies as st
 
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
-from afids_utils.ext.fcsv import (
-    FCSV_FIELDNAMES,
-    _get_afids,
-    _get_metadata,
-    save_fcsv,
-)
-from afids_utils.tests.strategies import afid_set
+from afids_utils.ext.fcsv import _get_afids, _get_metadata, save_fcsv
+from afids_utils.tests.strategies import afid_sets
 
 
 @pytest.fixture
@@ -164,65 +158,39 @@ class TestLoadFcsv:
 
 
 class TestSaveFcsv:
-    @given(afids_set=afid_set())
+    @given(afid_set=afid_sets())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_save_fcsv_invalid_template(
         self,
-        afids_set: AfidSet,
+        afid_set: AfidSet,
     ):
         with pytest.raises(FileNotFoundError):
-            save_fcsv(afids_set, "/invalid/template/path.fcsv")
+            save_fcsv(afid_set, "/invalid/template/path.fcsv")
 
-    @given(afids_set=afid_set(randomize_coord=False))
+    @given(afid_set=afid_sets(randomize_header=False))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_save_fcsv_valid_template(
-        self, afids_set: AfidSet, valid_fcsv_file: PathLike[str]
-    ):
+    def test_save_fcsv_valid_template(self, afid_set: AfidSet):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
             # Create and check output file
-            save_fcsv(afids_set, out_fcsv_file.name)
+            save_fcsv(afid_set, out_fcsv_file.name)
 
-            # Load files
-            with open(
-                valid_fcsv_file, "r", encoding="utf-8", newline=""
-            ) as template_fcsv_file, open(
-                out_fcsv_file.name, "r", encoding="utf-8", newline=""
-            ) as output_fcsv_file:
-                template_header = [
-                    template_fcsv_file.readline() for _ in range(3)
-                ]
-                output_header = [output_fcsv_file.readline() for _ in range(3)]
-                reader = csv.DictReader(
-                    output_fcsv_file, fieldnames=FCSV_FIELDNAMES
-                )
-                output_fcsv = list(reader)
-
-            # Check header
-            assert output_header == template_header
-            # Check contents
-            for idx, row in enumerate(output_fcsv):
-                assert (row["x"], row["y"], row["z"]) == (
-                    str(afids_set.afids[idx].x),
-                    str(afids_set.afids[idx].y),
-                    str(afids_set.afids[idx].z),
-                )
-
-            # Check to see if file can be loaded with afids-utils
+            # Check if file loads correctly and contents are the same
             test_load = AfidSet.load(out_fcsv_file.name)
+            assert test_load == afid_set
             assert isinstance(test_load, AfidSet)
 
-    @given(afids_set=afid_set(bad_range=True))
-    def test_invalid_num_afids(self, afids_set: AfidSet) -> None:
+    @given(afid_set=afid_sets(bad_range=True))
+    def test_invalid_num_afids(self, afid_set: AfidSet) -> None:
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
             with pytest.raises(TypeError) as err:
-                save_fcsv(afids_set, out_fcsv_file.name)
+                save_fcsv(afid_set, out_fcsv_file.name)
 
             assert "AFIDs, but received" in str(err.value)

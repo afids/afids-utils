@@ -37,7 +37,7 @@ class AfidPosition:
     x: float = attrs.field()
     y: float = attrs.field()
     z: float = attrs.field()
-    desc: str = attrs.field(default="")
+    desc: str = attrs.field()
 
 
 @attrs.define(kw_only=True)

@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
-from afids_utils.tests.strategies import afid_set
+from afids_utils.tests.strategies import afid_sets
 
 
 @pytest.fixture
@@ -167,16 +167,16 @@ class TestAfidsIO:
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
         ) as out_file:
-            afids_set = AfidSet.load(valid_fcsv_file)
+            afid_set = AfidSet.load(valid_fcsv_file)
             with pytest.raises(ValueError, match="Unsupported file extension"):
-                afids_set.save(out_file.name)
+                afid_set.save(out_file.name)
 
-    @given(afids_set=afid_set())
+    @given(afid_set=afid_sets())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_save_invalid_coord_system(self, afids_set: AfidSet):
-        afids_set.coord_system = "invalid"
+    def test_save_invalid_coord_system(self, afid_set: AfidSet):
+        afid_set.coord_system = "invalid"
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
@@ -184,19 +184,19 @@ class TestAfidsIO:
             with pytest.raises(
                 ValueError, match=".*invalid coordinate system"
             ):
-                afids_set.save(out_file.name)
+                afid_set.save(out_file.name)
 
-    @given(afids_set=afid_set(), coord_sys=st.sampled_from(["LPS", "RAS"]))
+    @given(afid_set=afid_sets(), coord_sys=st.sampled_from(["LPS", "RAS"]))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_update_coord_system(self, afids_set: AfidSet, coord_sys: str):
-        afids_set.coord_system = coord_sys
+    def test_update_coord_system(self, afid_set: AfidSet, coord_sys: str):
+        afid_set.coord_system = coord_sys
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_file:
-            afids_set.save(out_file.name)
+            afid_set.save(out_file.name)
 
             with open(
                 out_file.name, "r", encoding="utf-8", newline=""
@@ -217,8 +217,8 @@ class TestAfidsCore:
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_valid_get_afid(self, valid_fcsv_file: PathLike[str], label: int):
-        afids_set = AfidSet.load(valid_fcsv_file)
-        afid_pos = afids_set.get_afid(label)
+        afid_set = AfidSet.load(valid_fcsv_file)
+        afid_pos = afid_set.get_afid(label)
 
         # Check array type
         assert isinstance(afid_pos, AfidPosition)
@@ -230,8 +230,8 @@ class TestAfidsCore:
     def test_invalid_get_afid(
         self, valid_fcsv_file: PathLike[str], label: int
     ):
-        afids_set = AfidSet.load(valid_fcsv_file)
-        assume(not 1 <= label <= len(afids_set.afids))
+        afid_set = AfidSet.load(valid_fcsv_file)
+        assume(not 1 <= label <= len(afid_set.afids))
 
         with pytest.raises(InvalidFiducialError, match=".*not valid"):
-            afids_set.get_afid(label)
+            afid_set.get_afid(label)

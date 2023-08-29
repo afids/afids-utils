@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from importlib import resources
+
 import numpy as np
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
@@ -9,14 +12,14 @@ from afids_utils.afids import AfidPosition, AfidSet
 
 
 @st.composite
-def afid_set(
+def afid_sets(
     draw: st.DrawFn,
     min_value: float = -50.0,
     max_value: float = 50.0,
     width: int = 16,
     bad_range: bool = False,
-    randomize_coord: bool = True,
-) -> list[AfidPosition]:
+    randomize_header: bool = True,
+) -> AfidSet:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))
     coord_system = draw(st.sampled_from(["LPS", "RAS", "0", "1"]))
 
@@ -29,6 +32,11 @@ def afid_set(
             st.integers(min_value=0, max_value=100).filter(lambda x: x != 32)
         )
     )
+    # Load expected mappings
+    with resources.open_text(
+        "afids_utils.resources", "afids_descs.json"
+    ) as json_fpath:
+        mappings = json.load(json_fpath)
     for afid in range(num_afids):
         afid_pos.append(
             AfidPosition(
@@ -48,14 +56,14 @@ def afid_set(
                         min_value=min_value, max_value=max_value, width=width
                     )
                 ),
-                desc="",
+                desc=mappings["human"][afid][0] if afid < 32 else "Unknown",
             )
         )
 
     # Create AfidSet
     st_afid_set = AfidSet(
-        slicer_version=slicer_version,
-        coord_system=coord_system if randomize_coord else "0",
+        slicer_version=slicer_version if randomize_header else "4.6",
+        coord_system=coord_system if randomize_header else "LPS",
         afids=afid_pos,
     )
 

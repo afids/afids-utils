@@ -39,8 +39,8 @@ black = "black afids_utils"
 black-check = "black --check afids_utils"
 ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
-quality = ["yamlfix", "isort", "black", "ruff"]
-quality-check = ["yamlfix-check", "isort-check", "black-check", "ruff-check"]
+quality = ["yamlfix", "ruff", "isort", "black"]
+quality-check = ["yamlfix-check", "ruff-check", "isort-check", "black-check"]
 test = "pytest --doctest-modules afids_utils/tests"
 
 [tool.coverage]

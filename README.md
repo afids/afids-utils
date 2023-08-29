@@ -16,7 +16,7 @@ pip install afids-utils
 
 ## Contributing
 
-`afids-utils` is an open-source project and contributions are wlecome! If you
+`afids-utils` is an open-source project and contributions are welcome! If you
 have any bug reports, feature requests, or improvement suggestions, please
 submit them to the [issues page](https://github.com/afids/afids-utils/issues).
 
@@ -41,7 +41,7 @@ Now, `git remote -v` will show two remote repositories:
 - `upstream`, referring to the `afids` repository
 - `origin`, your personal fork
 
-To the pull the latest change sfrom the code:
+To the pull the latest changes from the code:
 
 ```bash
 git checkout main

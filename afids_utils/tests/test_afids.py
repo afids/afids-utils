@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 from importlib import resources
 from os import PathLike
@@ -12,6 +13,7 @@ from hypothesis import strategies as st
 
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
+from afids_utils.tests.strategies import afid_set
 
 
 @pytest.fixture
@@ -168,6 +170,45 @@ class TestAfidsIO:
             afids_set = AfidSet.load(valid_fcsv_file)
             with pytest.raises(ValueError, match="Unsupported file extension"):
                 afids_set.save(out_file.name)
+
+    @given(afids_set=afid_set())
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_save_invalid_coord_system(self, afids_set: AfidSet):
+        afids_set.coord_system = "invalid"
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+        ) as out_file:
+            with pytest.raises(
+                ValueError, match=".*invalid coordinate system"
+            ):
+                afids_set.save(out_file.name)
+
+    @given(afids_set=afid_set(), coord_sys=st.sampled_from(["LPS", "RAS"]))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_update_coord_system(self, afids_set: AfidSet, coord_sys: str):
+        afids_set.coord_system = coord_sys
+
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+        ) as out_file:
+            afids_set.save(out_file.name)
+
+            with open(
+                out_file.name, "r", encoding="utf-8", newline=""
+            ) as in_file:
+                in_data = in_file.readlines()
+                saved_header = in_data[:3]
+                parsed_coord = re.split(r"\s", saved_header[1])[-2]
+
+                if coord_sys == "LPS":
+                    assert parsed_coord == "0"
+                else:
+                    assert parsed_coord == "1"
 
 
 class TestAfidsCore:

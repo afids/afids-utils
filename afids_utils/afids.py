@@ -19,7 +19,7 @@ class AfidPosition:
     x: float = attrs.field()
     y: float = attrs.field()
     z: float = attrs.field()
-    desc: str = attrs.field()
+    desc: str = attrs.field(default="")
 
 
 @attrs.define
@@ -99,7 +99,6 @@ class AfidSet:
             afids=afids_positions,
         )
 
-    # TODO: Handle the metadata - specifically setting the coordinate system
     def save(self, out_fpath: PathLike[str] | str) -> None:
         """Save AFIDs to Slicer-compatible file
 
@@ -116,11 +115,19 @@ class AfidSet:
 
         out_fpath_ext = Path(out_fpath).suffix
 
+        # Update coordinate system for template
+        if self.coord_system not in ["LPS", "RAS", "0", "1"]:
+            raise ValueError("AfidSet contains an invalid coordinate system")
+        elif self.coord_system == "LPS":
+            self.coord_system = "0"
+        elif self.coord_system == "RAS":
+            self.coord_system = "1"
+
         # Saving fcsv
         if out_fpath_ext == ".fcsv":
             from afids_utils.ext.fcsv import save_fcsv
 
-            save_fcsv(self.afids, out_fpath)
+            save_fcsv(self, out_fpath)
         # Saving json
         # if out_fpath_ext = ".json":
         #   save_json(afids_coords, out_fpath)

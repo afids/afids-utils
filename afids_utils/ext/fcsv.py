@@ -6,7 +6,7 @@ import re
 from importlib import resources
 from os import PathLike
 
-from afids_utils.afids import AfidPosition
+from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
 
 HEADER_ROWS: int = 2
@@ -140,7 +140,7 @@ def load_fcsv(
 
 
 def save_fcsv(
-    afid_coords: list[AfidPosition],
+    afid_set: AfidSet,
     out_fcsv: PathLike[str] | str,
 ) -> None:
     """
@@ -148,8 +148,8 @@ def save_fcsv(
 
     Parameters
     ----------
-    afid_coords
-        List of AFID spatial positions
+    afid_set
+        A complete AfidSet containing metadata and positions of AFIDs
 
     out_fcsv
         Path of fcsv file to save AFIDs to
@@ -170,16 +170,19 @@ def save_fcsv(
         fcsv = list(reader)
 
     # Check to make sure shape of AFIDs array matches expected template
-    if len(afid_coords) != len(fcsv):
+    if len(afid_set.afids) != len(fcsv):
         raise TypeError(
-            f"Expected {len(fcsv)} AFIDs, but received {len(afid_coords)}"
+            f"Expected {len(fcsv)} AFIDs, but received {len(afid_set.afids)}"
         )
+
+    # Update header coordinate system
+    header[1] = f"# CoordinateSystem = {afid_set.coord_system}\n"
 
     # Loop over fiducials and update with fiducial spatial coordinates
     for idx, row in enumerate(fcsv):
-        row["x"] = afid_coords[idx].x
-        row["y"] = afid_coords[idx].y
-        row["z"] = afid_coords[idx].z
+        row["x"] = afid_set.afids[idx].x
+        row["y"] = afid_set.afids[idx].y
+        row["z"] = afid_set.afids[idx].z
 
     # Write output fcsv
     with open(out_fcsv, "w", encoding="utf-8", newline="") as out_fcsv_file:

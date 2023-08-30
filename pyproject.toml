@@ -11,7 +11,7 @@ packages = [
 exclude = ["afids_utils/tests"]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
+python = ">=3.8, <3.12"
 attrs = "^23.1.0"
 numpy = "^1.24.3"
 

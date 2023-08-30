@@ -169,12 +169,6 @@ def save_fcsv(
         reader = csv.DictReader(template_fcsv_file, fieldnames=FCSV_FIELDNAMES)
         fcsv = list(reader)
 
-    # Check to make sure shape of AFIDs array matches expected template
-    if len(afid_set.afids) != len(fcsv):
-        raise TypeError(
-            f"Expected {len(fcsv)} AFIDs, but received {len(afid_set.afids)}"
-        )
-
     # Update header coordinate system
     header[1] = f"# CoordinateSystem = {afid_set.coord_system}\n"
 

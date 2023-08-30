@@ -2,13 +2,81 @@ from __future__ import annotations
 
 import json
 from importlib import resources
+from itertools import chain
 
 import numpy as np
+from hypothesis import assume
 from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
 from afids_utils.afids import AfidPosition, AfidSet
+
+with resources.open_text(
+    "afids_utils.resources", "afids_descs.json"
+) as json_fpath:
+    HUMAN_PROTOCOL_MAP = json.load(json_fpath)["human"]
+
+
+def valid_labels():
+    return st.integers(min_value=1, max_value=32)
+
+
+def valid_coords():
+    return st.floats(allow_nan=False, allow_infinity=False)
+
+
+@st.composite
+def labels_with_mismatched_descs(draw: st.DrawFn):
+    label = draw(valid_labels())
+    desc = draw(
+        st.text().filter(
+            lambda desc: desc
+            not in [
+                HUMAN_PROTOCOL_MAP[label - 1]["desc"],
+                HUMAN_PROTOCOL_MAP[label - 1]["acronym"],
+            ]
+        )
+    )
+    return label, desc
+
+
+@st.composite
+def afid_positions(draw: st.DrawFn, label: int | None = None) -> AfidPosition:
+    if not label:
+        label = draw(valid_labels())
+    x, y, z = (draw(valid_coords()) for _ in range(3))
+    desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
+    return AfidPosition(label=label, x=x, y=y, z=z, desc=desc)
+
+
+@st.composite
+def position_lists(
+    draw: st.DrawFn, unique: bool = True, complete: bool = True
+) -> list[AfidPosition]:
+    if unique and complete:
+        labels = range(1, 33)
+    else:
+        values = (
+            range(1, 33)
+            if complete
+            else draw(
+                st.lists(valid_labels(), min_size=1, max_size=31, unique=True)
+            )
+        )
+        multiples = [
+            1 if unique else draw(st.integers(min_value=1, max_value=3))
+            for value in values
+        ]
+        assume(unique or (not all(multiple == 1 for multiple in multiples)))
+        labels = chain(
+            *[[value] * multiple for value, multiple in zip(values, multiples)]
+        )
+
+    return [
+        draw(afid_positions(label=label))
+        for label in draw(st.permutations(list(labels)))
+    ]
 
 
 @st.composite
@@ -17,7 +85,6 @@ def afid_sets(
     min_value: float = -50.0,
     max_value: float = 50.0,
     width: int = 16,
-    bad_range: bool = False,
     randomize_header: bool = True,
 ) -> AfidSet:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))
@@ -25,13 +92,7 @@ def afid_sets(
 
     # Set (in)valid number of Afid coordinates in a list
     afid_pos = []
-    num_afids = (
-        32
-        if not bad_range
-        else draw(
-            st.integers(min_value=0, max_value=100).filter(lambda x: x != 32)
-        )
-    )
+    num_afids = 32
     # Load expected mappings
     with resources.open_text(
         "afids_utils.resources", "afids_descs.json"
@@ -56,7 +117,9 @@ def afid_sets(
                         min_value=min_value, max_value=max_value, width=width
                     )
                 ),
-                desc=mappings["human"][afid][0] if afid < 32 else "Unknown",
+                desc=mappings["human"][afid]["desc"]
+                if afid < 32
+                else "Unknown",
             )
         )
 

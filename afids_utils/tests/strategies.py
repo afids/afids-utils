@@ -10,7 +10,7 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
-from afids_utils.afids import AfidPosition, AfidSet
+from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 
 with resources.open_text(
     "afids_utils.resources", "afids_descs.json"
@@ -168,8 +168,8 @@ def voxel_coords(
     draw: st.DrawFn,
     min_value: int = -50,
     max_value: int = 50,
-) -> AfidPosition:
-    return AfidPosition(
+) -> AfidVoxel:
+    return AfidVoxel(
         label=draw(st.integers(min_value=1, max_value=32)),
         i=draw(st.integers(min_value=min_value, max_value=max_value)),
         j=draw(st.integers(min_value=min_value, max_value=max_value)),

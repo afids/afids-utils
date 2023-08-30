@@ -71,11 +71,12 @@ def voxel_to_world(
     """
 
     # Put into numpy array for easier computation
-    voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k, 1])
+    voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k])
 
     # Convert to float, perform rotation, translation
-    world_pos = np.dot(nii_affine[:3, :3], voxel_pos)
-    world_pos = world_pos + nii_affine[:3, 3:4]
+    world_pos = voxel_pos.astype(float)
+    world_pos = np.dot(nii_affine[:3, :3], world_pos)
+    world_pos = world_pos + nii_affine[:3, 3:4].T[0]
 
     return AfidPosition(
         label=afid_voxel.label,

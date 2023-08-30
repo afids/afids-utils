@@ -29,6 +29,8 @@ def world_to_voxel(
     AfidVoxel
         Object containing transformed integer voxel coordinates (i, j, k)
     """
+    if not isinstance(afid_world, AfidPosition):
+        raise TypeError("Not an AfidPosition object")
 
     # Put into numpy array for easier computation
     world_pos = np.asarray([afid_world.x, afid_world.y, afid_world.z])
@@ -69,6 +71,8 @@ def voxel_to_world(
         Object containing approximate floating-point spatial coordinates
         (x, y, z)
     """
+    if not isinstance(afid_voxel, AfidVoxel):
+        raise TypeError("Not an AfidVoxel object")
 
     # Put into numpy array for easier computation
     voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k])

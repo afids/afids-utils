@@ -35,26 +35,12 @@ def human_mappings() -> list[dict[str, str]]:
 
 
 class TestAfidPosition:
-    @given(
-        label=af_st.valid_labels(),
-        x=af_st.valid_coords(),
-        y=af_st.valid_coords(),
-        z=af_st.valid_coords(),
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(pos=af_st.afid_positions())
     def test_valid_position(
         self,
-        human_mappings: list[dict[str, str]],
-        label: int,
-        x: float,
-        y: float,
-        z: float,
+        pos: AfidPosition,
     ):
-        AfidPosition(
-            label=label, x=x, y=y, z=z, desc=human_mappings[label - 1]["desc"]
-        )
+        """Just checks that a hypothesis-generated AfidsPosition inits."""
 
     @given(
         label=st.integers().filter(lambda label: label not in range(1, 33)),

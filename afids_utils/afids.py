@@ -164,16 +164,6 @@ class AfidSet:
         if len(afids_positions) != len(mappings["human"]):
             raise InvalidFileError("Unexpected number of fiducials")
 
-        # Validate descriptions, before dropping
-        for label in range(len(afids_positions)):
-            if afids_positions[label].desc not in [
-                mappings["human"][label]["desc"],
-                mappings["human"][label]["acronym"],
-            ]:
-                raise InvalidFiducialError(
-                    f"Description for label {label+1} does not match expected"
-                )
-
         return cls(
             slicer_version=slicer_version,
             coord_system=coord_system,

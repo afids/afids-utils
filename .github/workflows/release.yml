@@ -8,8 +8,13 @@ on:
         required: false
 jobs:
   release-package:
-    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@main
+    uses: khanlab/actions/.github/workflows/workflow-release_task-publishGithub.yml@v0.1.0
     with:
       comments: ${{ github.event.inputs.comments }}
     secrets:
       BP_PAT: ${{ secrets.BP_PAT_TOKEN }}
+
+  deploy-pypi:
+    uses: khanlab/actions/.github/workflows/workflow-release_task-deployPypi.yml@v0.1.0
+    secrets:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

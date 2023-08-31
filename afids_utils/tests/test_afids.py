@@ -4,13 +4,13 @@ import json
 import re
 import tempfile
 from importlib import resources
-from itertools import pairwise
 from os import PathLike
 from pathlib import Path
 
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
+from more_itertools import pairwise
 
 import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidSet

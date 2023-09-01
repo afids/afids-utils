@@ -8,7 +8,7 @@ from os import PathLike
 from pathlib import Path
 
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis import strategies as st
 from more_itertools import pairwise
 
@@ -132,6 +132,13 @@ class TestAfidSet:
         slicer_version=st.from_regex(r"\d\.\d+"),
         coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
         positions=af_st.position_lists(unique=False, complete=False),
+    )
+    @example(  # ensure case of 32 AFIDs with repeats gets hit
+        slicer_version="1.0",
+        coord_system="RAS",
+        positions=[
+            AfidPosition(desc="AC", label=1, x=1, y=1, z=1) for _ in range(32)
+        ],
     )
     def test_repeated_incomplete_afid_set(
         self,

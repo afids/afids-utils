@@ -22,8 +22,15 @@ def valid_labels():
     return st.integers(min_value=1, max_value=32)
 
 
-def valid_coords():
-    return st.floats(allow_nan=False, allow_infinity=False)
+# Constrain coordinates to be within 180mm or 200 voxels in any direction
+def valid_position_coords():
+    return st.floats(
+        allow_nan=False, min_value=-90, max_value=90, allow_infinity=False
+    )
+
+
+def valid_voxel_coords():
+    return st.integers(min_value=0, max_value=200)
 
 
 @st.composite
@@ -45,9 +52,18 @@ def labels_with_mismatched_descs(draw: st.DrawFn):
 def afid_positions(draw: st.DrawFn, label: int | None = None) -> AfidPosition:
     if not label:
         label = draw(valid_labels())
-    x, y, z = (draw(valid_coords()) for _ in range(3))
+    x, y, z = (draw(valid_position_coords()) for _ in range(3))
     desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
     return AfidPosition(label=label, x=x, y=y, z=z, desc=desc)
+
+
+@st.composite
+def afid_voxels(draw: st.DrawFn, label: int | None = None) -> AfidVoxel:
+    if not label:
+        label = draw(valid_labels())
+    i, j, k = (draw(valid_voxel_coords()) for _ in range(3))
+    desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
+    return AfidVoxel(label=label, i=i, j=j, k=k, desc=desc)
 
 
 @st.composite
@@ -131,59 +147,6 @@ def afid_sets(
     )
 
     return st_afid_set
-
-
-@st.composite
-def world_coords(
-    draw: st.DrawFn,
-    min_value: float = -50.0,
-    max_value: float = 50.0,
-    width: int = 16,
-) -> AfidPosition:
-    return AfidPosition(
-        label=draw(st.integers(min_value=1, max_value=32)),
-        x=draw(
-            st.floats(min_value=min_value, max_value=max_value, width=width)
-        ),
-        y=draw(
-            st.floats(min_value=min_value, max_value=max_value, width=width)
-        ),
-        z=draw(
-            st.floats(min_value=min_value, max_value=max_value, width=width)
-        ),
-        desc=draw(
-            st.text(
-                min_size=3,
-                max_size=10,
-                alphabet=st.characters(
-                    min_codepoint=ord("A"), max_codepoint=ord("z")
-                ),
-            )
-        ),
-    )
-
-
-@st.composite
-def voxel_coords(
-    draw: st.DrawFn,
-    min_value: int = -50,
-    max_value: int = 50,
-) -> AfidVoxel:
-    return AfidVoxel(
-        label=draw(st.integers(min_value=1, max_value=32)),
-        i=draw(st.integers(min_value=min_value, max_value=max_value)),
-        j=draw(st.integers(min_value=min_value, max_value=max_value)),
-        k=draw(st.integers(min_value=min_value, max_value=max_value)),
-        desc=draw(
-            st.text(
-                min_size=3,
-                max_size=10,
-                alphabet=st.characters(
-                    min_codepoint=ord("A"), max_codepoint=ord("z")
-                ),
-            )
-        ),
-    )
 
 
 @st.composite

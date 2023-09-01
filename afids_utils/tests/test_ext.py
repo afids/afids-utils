@@ -184,13 +184,3 @@ class TestSaveFcsv:
             test_load = AfidSet.load(out_fcsv_file.name)
             assert test_load == afid_set
             assert isinstance(test_load, AfidSet)
-
-    @given(afid_set=afid_sets(bad_range=True))
-    def test_invalid_num_afids(self, afid_set: AfidSet) -> None:
-        with tempfile.NamedTemporaryFile(
-            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
-        ) as out_fcsv_file:
-            with pytest.raises(TypeError) as err:
-                save_fcsv(afid_set, out_fcsv_file.name)
-
-            assert "AFIDs, but received" in str(err.value)

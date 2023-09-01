@@ -10,6 +10,21 @@ import attrs
 
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 
+with resources.open_text(
+    "afids_utils.resources", "afids_descs.json"
+) as json_fpath:
+    HUMAN_PROTOCOL_MAP = json.load(json_fpath)["human"]
+
+
+def _validate_desc(self, attribute: attrs.Attribute[str], value: str):
+    if value not in [
+        HUMAN_PROTOCOL_MAP[self.label - 1]["desc"],
+        HUMAN_PROTOCOL_MAP[self.label - 1]["acronym"],
+    ]:
+        raise InvalidFiducialError(
+            f"Description {value} does not correspond to label {self.label}."
+        )
+
 
 @attrs.define(kw_only=True)
 class AfidPosition:
@@ -33,11 +48,39 @@ class AfidPosition:
         Description for AFID (e.g. AC, PC)
     """
 
-    label: int = attrs.field()
+    label: int = attrs.field(validator=attrs.validators.in_(range(1, 33)))
     x: float = attrs.field()
     y: float = attrs.field()
     z: float = attrs.field()
-    desc: str = attrs.field()
+    desc: str = attrs.field(validator=_validate_desc)
+
+
+def _validate_afids(
+    instance: AfidSet,
+    attribute: attrs.Attribute[list[AfidPosition]],
+    value: list[AfidPosition],
+):
+    if len(value) != (expected_length := len(HUMAN_PROTOCOL_MAP)):
+        raise ValueError(
+            f"Incorrect number of AFIDs. Expected {expected_length}, "
+            f"found: {len(value)}"
+        )
+    incorrect_afids = [
+        (afid, expected_label)
+        for expected_label, afid in enumerate(value, start=1)
+        if afid.label != expected_label
+    ]
+    if incorrect_afids:
+        msg = "\n".join(
+            [
+                f"Found {len(incorrect_afids)} afids with incorrect labels",
+                *[
+                    f"AFID: {afid}, expected label: {expected_label}"
+                    for afid, expected_label in incorrect_afids
+                ],
+            ]
+        )
+        raise ValueError(msg)
 
 
 @attrs.define(kw_only=True)
@@ -58,7 +101,12 @@ class AfidSet:
 
     slicer_version: str = attrs.field()
     coord_system: str = attrs.field()
-    afids: list[AfidPosition] = attrs.field()
+    afids: list[AfidPosition] = attrs.field(
+        converter=lambda afids: list(
+            sorted(afids, key=lambda afid: afid.label)
+        ),
+        validator=_validate_afids,
+    )
 
     @classmethod
     def load(cls, afids_fpath: PathLike[str] | str) -> AfidSet:
@@ -115,13 +163,6 @@ class AfidSet:
         # Check expected number of fiducials exist
         if len(afids_positions) != len(mappings["human"]):
             raise InvalidFileError("Unexpected number of fiducials")
-
-        # Validate descriptions, before dropping
-        for label in range(len(afids_positions)):
-            if afids_positions[label].desc not in mappings["human"][label]:
-                raise InvalidFiducialError(
-                    f"Description for label {label+1} does not match expected"
-                )
 
         return cls(
             slicer_version=slicer_version,

@@ -8,12 +8,13 @@ from os import PathLike
 from pathlib import Path
 
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import HealthCheck, assume, example, given, settings
 from hypothesis import strategies as st
+from more_itertools import pairwise
 
+import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
-from afids_utils.tests.strategies import afid_sets
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def valid_fcsv_file() -> PathLike[str]:
 
 
 @pytest.fixture
-def human_mappings() -> list[list[str] | str]:
+def human_mappings() -> list[dict[str, str]]:
     with resources.open_text(
         "afids_utils.resources", "afids_descs.json"
     ) as json_fpath:
@@ -33,12 +34,140 @@ def human_mappings() -> list[list[str] | str]:
     return mappings["human"]
 
 
+class TestAfidPosition:
+    @given(pos=af_st.afid_positions())
+    def test_valid_position(
+        self,
+        pos: AfidPosition,
+    ):
+        """Just checks that a hypothesis-generated AfidsPosition inits."""
+
+    @given(
+        label=st.integers().filter(lambda label: label not in range(1, 33)),
+        x=af_st.valid_coords(),
+        y=af_st.valid_coords(),
+        z=af_st.valid_coords(),
+        desc=st.text(),
+    )
+    def test_invalid_label(
+        self, label: int, x: int, y: int, z: int, desc: str
+    ):
+        with pytest.raises(ValueError, match=r".*must be in.*"):
+            AfidPosition(label=label, x=x, y=y, z=z, desc=desc)
+
+    @given(
+        label_with_desc=af_st.labels_with_mismatched_descs(),
+        x=af_st.valid_coords(),
+        y=af_st.valid_coords(),
+        z=af_st.valid_coords(),
+    )
+    def test_mismatched_desc(
+        self, label_with_desc: tuple[int, str], x: int, y: int, z: int
+    ):
+        label, desc = label_with_desc
+        with pytest.raises(
+            InvalidFiducialError, match=r".*does not correspond.*"
+        ):
+            AfidPosition(label=label, x=x, y=y, z=z, desc=desc)
+
+
+class TestAfidSet:
+    @given(
+        slicer_version=st.from_regex(r"\d\.\d+"),
+        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        positions=af_st.position_lists(),
+    )
+    def test_valid_afid_set(
+        self,
+        slicer_version: str,
+        coord_system: str,
+        positions: list[AfidPosition],
+    ):
+        afid_set = AfidSet(
+            slicer_version=slicer_version,
+            coord_system=coord_system,
+            afids=positions,
+        )
+        # Check that afids are sorted
+        for first, second in pairwise(afid_set.afids):
+            assert first.label <= second.label
+
+    @given(
+        slicer_version=st.from_regex(r"\d\.\d+"),
+        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        positions=af_st.position_lists(complete=False),
+    )
+    def test_incomplete_afid_set(
+        self,
+        slicer_version: str,
+        coord_system: str,
+        positions: list[AfidPosition],
+    ):
+        with pytest.raises(ValueError, match=r"Incorrect number.*"):
+            AfidSet(
+                slicer_version=slicer_version,
+                coord_system=coord_system,
+                afids=positions,
+            )
+
+    @given(
+        slicer_version=st.from_regex(r"\d\.\d+"),
+        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        positions=af_st.position_lists(unique=False),
+    )
+    def test_repeated_afid_set(
+        self,
+        slicer_version: str,
+        coord_system: str,
+        positions: list[AfidPosition],
+    ):
+        with pytest.raises(ValueError, match=r"Incorrect number.*"):
+            AfidSet(
+                slicer_version=slicer_version,
+                coord_system=coord_system,
+                afids=positions,
+            )
+
+    @given(
+        slicer_version=st.from_regex(r"\d\.\d+"),
+        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        positions=af_st.position_lists(unique=False, complete=False),
+    )
+    @example(  # ensure case of 32 AFIDs with repeats gets hit
+        slicer_version="1.0",
+        coord_system="RAS",
+        positions=[
+            AfidPosition(desc="AC", label=1, x=1, y=1, z=1) for _ in range(32)
+        ],
+    )
+    def test_repeated_incomplete_afid_set(
+        self,
+        slicer_version: str,
+        coord_system: str,
+        positions: list[AfidPosition],
+    ):
+        with pytest.raises(
+            ValueError,
+            match=r"(?:Incorrect number.*)|(?:.*incorrect labels.*)",
+        ):
+            AfidSet(
+                slicer_version=slicer_version,
+                coord_system=coord_system,
+                afids=positions,
+            )
+
+
 class TestAfidsIO:
     @given(label=st.integers(min_value=0, max_value=31))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_valid_load(self, valid_fcsv_file: PathLike[str], label: int):
+    def test_valid_load(
+        self,
+        human_mappings: list[dict[str, str]],
+        valid_fcsv_file: PathLike[str],
+        label: int,
+    ):
         # Load valid file to check internal types
         afids_set = AfidSet.load(valid_fcsv_file)
 
@@ -116,13 +245,19 @@ class TestAfidsIO:
         label: int,
         desc: str,
     ) -> None:
-        assume(desc not in human_mappings[label])
+        assume(
+            desc
+            not in [
+                human_mappings[label]["desc"],
+                human_mappings[label]["acronym"],
+            ]
+        )
 
         # Replace valid description with a mismatch
         with open(valid_fcsv_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
             fcsv_data[label + 3] = fcsv_data[label + 3].replace(
-                human_mappings[label][0], desc
+                human_mappings[label]["desc"], desc
             )
 
         # Write to temp file
@@ -136,7 +271,7 @@ class TestAfidsIO:
 
             # Test for description match error raised
             with pytest.raises(
-                InvalidFiducialError, match="Description for label.*"
+                InvalidFiducialError, match=r".*does not correspond to label.*"
             ):
                 AfidSet.load(out_fcsv_file.name)
 
@@ -171,7 +306,7 @@ class TestAfidsIO:
             with pytest.raises(ValueError, match="Unsupported file extension"):
                 afid_set.save(out_file.name)
 
-    @given(afid_set=afid_sets())
+    @given(afid_set=af_st.afid_sets())
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
@@ -186,7 +321,9 @@ class TestAfidsIO:
             ):
                 afid_set.save(out_file.name)
 
-    @given(afid_set=afid_sets(), coord_sys=st.sampled_from(["LPS", "RAS"]))
+    @given(
+        afid_set=af_st.afid_sets(), coord_sys=st.sampled_from(["LPS", "RAS"])
+    )
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )

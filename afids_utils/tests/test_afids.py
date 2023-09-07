@@ -164,7 +164,6 @@ class TestAfidsIO:
     )
     def test_valid_load(
         self,
-        human_mappings: list[dict[str, str]],
         valid_fcsv_file: PathLike[str],
         label: int,
     ):

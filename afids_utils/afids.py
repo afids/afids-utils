@@ -85,7 +85,25 @@ def _validate_afids(
 
 @attrs.define
 class AfidVoxel:
-    """Class for Afid voxel position"""
+    """Class for Afid voxel position
+
+    Parameters
+    ----------
+    label
+        Unique label for AFID
+
+    i
+        Spatial position along i-axis
+
+    j
+        Spatial position along j-axis
+
+    k
+        Spatial position along k-axis
+
+    desc
+        Description for AFID (e.g. AC, PC)
+    """
 
     label: int = attrs.field()
     i: int = attrs.field()

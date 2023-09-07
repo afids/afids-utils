@@ -6,8 +6,8 @@ from hypothesis import HealthCheck, given, settings
 from numpy.typing import NDArray
 
 import afids_utils.tests.strategies as af_st
-from afids_utils.afids import AfidPosition, AfidVoxel
-from afids_utils.transforms import voxel_to_world, world_to_voxel
+import afids_utils.transforms as af_xfm
+from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 
 
 class TestAfidWorld2Voxel:
@@ -21,7 +21,7 @@ class TestAfidWorld2Voxel:
     def test_world_to_voxel_xfm(
         self, afid_position: AfidPosition, nii_affine: NDArray[np.float_]
     ):
-        afid_voxel = world_to_voxel(afid_position, nii_affine)
+        afid_voxel = af_xfm.world_to_voxel(afid_position, nii_affine)
 
         assert isinstance(afid_voxel, AfidVoxel)
         # Have to assert specific int dtype
@@ -38,7 +38,7 @@ class TestAfidWorld2Voxel:
         self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
     ):
         with pytest.raises(TypeError, match="Not an AfidPosition.*"):
-            world_to_voxel(afid_voxel, nii_affine)
+            af_xfm.world_to_voxel(afid_voxel, nii_affine)
 
 
 class TestAfidVoxel2World:
@@ -50,7 +50,7 @@ class TestAfidVoxel2World:
     def test_voxel_to_world_xfm(
         self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
     ):
-        afid_position = voxel_to_world(afid_voxel, nii_affine)
+        afid_position = af_xfm.voxel_to_world(afid_voxel, nii_affine)
 
         assert isinstance(afid_position, AfidPosition)
         # Have to assert specific float dtype
@@ -69,7 +69,7 @@ class TestAfidVoxel2World:
         self, afid_position: AfidPosition, nii_affine: NDArray[np.float_]
     ):
         with pytest.raises(TypeError, match="Not an AfidVoxel.*"):
-            voxel_to_world(afid_position, nii_affine)
+            af_xfm.voxel_to_world(afid_position, nii_affine)
 
 
 class TestAfidRoundTripConvert:
@@ -83,8 +83,8 @@ class TestAfidRoundTripConvert:
     def test_round_trip_world(
         self, afid_position: AfidPosition, nii_affine: NDArray[np.float_]
     ):
-        afid_voxel = world_to_voxel(afid_position, nii_affine)
-        afid_position_approx = voxel_to_world(afid_voxel, nii_affine)
+        afid_voxel = af_xfm.world_to_voxel(afid_position, nii_affine)
+        afid_position_approx = af_xfm.voxel_to_world(afid_voxel, nii_affine)
         print(afid_position, afid_position_approx, nii_affine)
 
         # Check to see if round-trip approximates to within 10mm
@@ -101,10 +101,55 @@ class TestAfidRoundTripConvert:
     def test_round_trip_voxel(
         self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
     ):
-        afid_world = voxel_to_world(afid_voxel, nii_affine)
-        afid_voxel_approx = world_to_voxel(afid_world, nii_affine)
+        afid_world = af_xfm.voxel_to_world(afid_voxel, nii_affine)
+        afid_voxel_approx = af_xfm.world_to_voxel(afid_world, nii_affine)
 
         # Check to see if round-trip approximates to within 2 voxels
         assert afid_voxel_approx.i == pytest.approx(afid_voxel.i, abs=2)
         assert afid_voxel_approx.j == pytest.approx(afid_voxel.j, abs=2)
         assert afid_voxel_approx.k == pytest.approx(afid_voxel.k, abs=2)
+
+
+class TestXfmCoordSystem:
+    @given(afid_set=af_st.afid_sets())
+    @settings(
+        deadline=400,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_invalid_new_coord_system(self, afid_set: AfidSet):
+        with pytest.raises(
+            ValueError, match=r"Unrecognized coordinate system.*"
+        ):
+            af_xfm.xfm_coord_system(afid_set, new_coord_system="invalid")
+
+    @given(afid_set=af_st.afid_sets(randomize_header=False))
+    @settings(
+        deadline=400,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_same_coord_system(self, afid_set: AfidSet):
+        assert afid_set == af_xfm.xfm_coord_system(
+            afid_set, new_coord_system="LPS"
+        )
+
+    @given(afid_set=af_st.afid_sets(randomize_header=False))
+    @settings(
+        deadline=400,
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_valid_new_coord_system(self, afid_set):
+        new_afid_set = af_xfm.xfm_coord_system(afid_set)
+
+        assert isinstance(new_afid_set, AfidSet)
+        assert new_afid_set.coord_system == "RAS"
+
+        for old_afid, new_afid in zip(afid_set.afids, new_afid_set.afids):
+            assert (
+                new_afid.x,
+                new_afid.y,
+                new_afid.z,
+            ) == (
+                -old_afid.x,
+                -old_afid.y,
+                old_afid.z,
+            )

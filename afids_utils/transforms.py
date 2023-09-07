@@ -1,18 +1,18 @@
 """Methods for transforming between different coordinate systems"""
 from __future__ import annotations
 
+import attrs
 import numpy as np
 from numpy.typing import NDArray
 
-from afids_utils.afids import AfidPosition, AfidVoxel
+from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 
 
 def world_to_voxel(
     afid_world: AfidPosition,
     nii_affine: NDArray[np.float_],
 ) -> AfidVoxel:
-    """
-    Transform fiducials from world coordinates to voxel coordinates
+    """Transform fiducials from world coordinates to voxel coordinates
 
     Parameters
     ----------
@@ -54,8 +54,7 @@ def voxel_to_world(
     afid_voxel: AfidVoxel,
     nii_affine: NDArray[np.float_],
 ) -> AfidPosition:
-    """
-    Transform fiducials from world coordinates to voxel coordinates
+    """Transform fiducials from world coordinates to voxel coordinates
 
     Parameters
     ----------
@@ -87,4 +86,44 @@ def voxel_to_world(
         y=world_pos[1],
         z=world_pos[2],
         desc=afid_voxel.desc,
+    )
+
+
+def xfm_coord_system(
+    afid_set: AfidSet, new_coord_system: str = "RAS"
+) -> AfidSet:
+    """Convert AFID set between LPS and RAS coordinates
+
+    Parameters
+    ----------
+    afid_set
+        Object containing valid AfidSet
+
+    new_coord_system
+        Convert AFID set to defined coordinate system (default: 'RAS')
+
+    Returns
+    -------
+    AfidSet
+        Object containing AFIDs stored in defined coordinate system
+
+    Raises
+    ------
+    ValueError
+        If invalid coordinate system
+    """
+    if new_coord_system not in ["RAS", "LPS"]:
+        raise ValueError(
+            "Unrecognized coordinate system - please select RAS or LPS"
+        )
+
+    if afid_set.coord_system == new_coord_system:
+        return afid_set
+
+    # Create copy and update AFIDs for new coordinate system
+    new_afids = [
+        attrs.evolve(afid, x=-afid.x, y=-afid.y) for afid in afid_set.afids
+    ]
+    return attrs.evolve(
+        afid_set, coord_system=new_coord_system, afids=new_afids
     )

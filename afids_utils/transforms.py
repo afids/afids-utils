@@ -1,8 +1,7 @@
 """Methods for transforming between different coordinate systems"""
 from __future__ import annotations
 
-from copy import deepcopy
-
+import attrs
 import numpy as np
 from numpy.typing import NDArray
 
@@ -90,7 +89,7 @@ def voxel_to_world(
     )
 
 
-def coord_system_xfm(
+def xfm_coord_system(
     afid_set: AfidSet, new_coord_system: str = "RAS"
 ) -> AfidSet:
     """Convert AFID set between LPS and RAS coordinates
@@ -111,8 +110,7 @@ def coord_system_xfm(
     Raises
     ------
     ValueError
-        If invalid coordinate system, or if already in defined
-        cordinate system
+        If invalid coordinate system
     """
     if new_coord_system not in ["RAS", "LPS"]:
         raise ValueError(
@@ -120,15 +118,12 @@ def coord_system_xfm(
         )
 
     if afid_set.coord_system == new_coord_system:
-        raise ValueError(f"Already saved in {new_coord_system}")
+        return afid_set
 
-    # Create copy and update coordinate system
-    new_afid_set = deepcopy(afid_set)
-    new_afid_set.coord_system = new_coord_system
-
-    # Update afid positions
-    for idx in range(len(new_afid_set.afids)):
-        new_afid_set.afids[idx].x = -new_afid_set.afids[idx].x
-        new_afid_set.afids[idx].y = -new_afid_set.afids[idx].y
-
-    return new_afid_set
+    # Create copy and update AFIDs for new coordinate system
+    new_afids = [
+        attrs.evolve(afid, x=-afid.x, y=-afid.y) for afid in afid_set.afids
+    ]
+    return attrs.evolve(
+        afid_set, coord_system=new_coord_system, afids=new_afids
+    )

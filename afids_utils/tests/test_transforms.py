@@ -110,7 +110,7 @@ class TestAfidRoundTripConvert:
         assert afid_voxel_approx.k == pytest.approx(afid_voxel.k, abs=2)
 
 
-class TestCoordSystemXfm:
+class TestXfmCoordSystem:
     @given(afid_set=af_st.afid_sets())
     @settings(
         deadline=400,
@@ -120,7 +120,7 @@ class TestCoordSystemXfm:
         with pytest.raises(
             ValueError, match=r"Unrecognized coordinate system.*"
         ):
-            af_xfm.coord_system_xfm(afid_set, new_coord_system="invalid")
+            af_xfm.xfm_coord_system(afid_set, new_coord_system="invalid")
 
     @given(afid_set=af_st.afid_sets(randomize_header=False))
     @settings(
@@ -128,8 +128,9 @@ class TestCoordSystemXfm:
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_same_coord_system(self, afid_set: AfidSet):
-        with pytest.raises(ValueError, match=r"Already saved in.*"):
-            af_xfm.coord_system_xfm(afid_set, new_coord_system="LPS")
+        assert afid_set == af_xfm.xfm_coord_system(
+            afid_set, new_coord_system="LPS"
+        )
 
     @given(afid_set=af_st.afid_sets(randomize_header=False))
     @settings(
@@ -137,18 +138,18 @@ class TestCoordSystemXfm:
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_valid_new_coord_system(self, afid_set):
-        new_afid_set = af_xfm.coord_system_xfm(afid_set)
+        new_afid_set = af_xfm.xfm_coord_system(afid_set)
 
         assert isinstance(new_afid_set, AfidSet)
         assert new_afid_set.coord_system == "RAS"
 
-        for idx in range(len(new_afid_set.afids)):
+        for old_afid, new_afid in zip(afid_set.afids, new_afid_set.afids):
             assert (
-                new_afid_set.afids[idx].x,
-                new_afid_set.afids[idx].y,
-                new_afid_set.afids[idx].z,
+                new_afid.x,
+                new_afid.y,
+                new_afid.z,
             ) == (
-                -afid_set.afids[idx].x,
-                -afid_set.afids[idx].y,
-                afid_set.afids[idx].z,
+                -old_afid.x,
+                -old_afid.y,
+                old_afid.z,
             )

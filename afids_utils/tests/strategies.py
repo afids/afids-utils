@@ -10,7 +10,7 @@ from hypothesis import strategies as st
 from hypothesis.extra.numpy import arrays
 from numpy.typing import NDArray
 
-from afids_utils.afids import AfidPosition, AfidSet
+from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 
 with resources.open_text(
     "afids_utils.resources", "afids_descs.json"
@@ -22,8 +22,15 @@ def valid_labels():
     return st.integers(min_value=1, max_value=32)
 
 
-def valid_coords():
-    return st.floats(allow_nan=False, allow_infinity=False)
+# Constrain coordinates to be within 180mm or 200 voxels in any direction
+def valid_position_coords():
+    return st.floats(
+        allow_nan=False, min_value=-90, max_value=90, allow_infinity=False
+    )
+
+
+def valid_voxel_coords():
+    return st.integers(min_value=0, max_value=200)
 
 
 @st.composite
@@ -45,9 +52,18 @@ def labels_with_mismatched_descs(draw: st.DrawFn):
 def afid_positions(draw: st.DrawFn, label: int | None = None) -> AfidPosition:
     if not label:
         label = draw(valid_labels())
-    x, y, z = (draw(valid_coords()) for _ in range(3))
+    x, y, z = (draw(valid_position_coords()) for _ in range(3))
     desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
     return AfidPosition(label=label, x=x, y=y, z=z, desc=desc)
+
+
+@st.composite
+def afid_voxels(draw: st.DrawFn, label: int | None = None) -> AfidVoxel:
+    if not label:
+        label = draw(valid_labels())
+    i, j, k = (draw(valid_voxel_coords()) for _ in range(3))
+    desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
+    return AfidVoxel(label=label, i=i, j=j, k=k, desc=desc)
 
 
 @st.composite
@@ -134,25 +150,7 @@ def afid_sets(
 
 
 @st.composite
-def world_coord(
-    draw: st.DrawFn,
-    min_value: float = -50.0,
-    max_value: float = 50.0,
-    width: int = 16,
-) -> NDArray[np.single]:
-    return draw(
-        arrays(
-            shape=(3, 1),
-            dtype=np.single,
-            elements=st.floats(
-                min_value=min_value, max_value=max_value, width=width
-            ),
-        )
-    )
-
-
-@st.composite
-def affine_xfm(
+def affine_xfms(
     draw: st.DrawFn,
 ) -> NDArray[np.single]:
     affine = np.eye(4)

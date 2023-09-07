@@ -44,9 +44,9 @@ class TestAfidPosition:
 
     @given(
         label=st.integers().filter(lambda label: label not in range(1, 33)),
-        x=af_st.valid_coords(),
-        y=af_st.valid_coords(),
-        z=af_st.valid_coords(),
+        x=af_st.valid_position_coords(),
+        y=af_st.valid_position_coords(),
+        z=af_st.valid_position_coords(),
         desc=st.text(),
     )
     def test_invalid_label(
@@ -57,9 +57,9 @@ class TestAfidPosition:
 
     @given(
         label_with_desc=af_st.labels_with_mismatched_descs(),
-        x=af_st.valid_coords(),
-        y=af_st.valid_coords(),
-        z=af_st.valid_coords(),
+        x=af_st.valid_position_coords(),
+        y=af_st.valid_position_coords(),
+        z=af_st.valid_position_coords(),
     )
     def test_mismatched_desc(
         self, label_with_desc: tuple[int, str], x: int, y: int, z: int

@@ -83,6 +83,17 @@ def _validate_afids(
         raise ValueError(msg)
 
 
+@attrs.define
+class AfidVoxel:
+    """Class for Afid voxel position"""
+
+    label: int = attrs.field()
+    i: int = attrs.field()
+    j: int = attrs.field()
+    k: int = attrs.field()
+    desc: str = attrs.field()
+
+
 @attrs.define(kw_only=True)
 class AfidSet:
     """Base class for a set of AFIDs

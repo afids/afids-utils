@@ -99,7 +99,7 @@ def xfm_coord_system(
     afid_set
         Object containing valid AfidSet
 
-    new_coord_sys
+    new_coord_system
         Convert AFID set to defined coordinate system (default: 'RAS')
 
     Returns

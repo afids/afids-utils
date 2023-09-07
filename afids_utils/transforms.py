@@ -1,18 +1,19 @@
 """Methods for transforming between different coordinate systems"""
 from __future__ import annotations
 
+from copy import deepcopy
+
 import numpy as np
 from numpy.typing import NDArray
 
-from afids_utils.afids import AfidPosition, AfidVoxel
+from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 
 
 def world_to_voxel(
     afid_world: AfidPosition,
     nii_affine: NDArray[np.float_],
 ) -> AfidVoxel:
-    """
-    Transform fiducials from world coordinates to voxel coordinates
+    """Transform fiducials from world coordinates to voxel coordinates
 
     Parameters
     ----------
@@ -54,8 +55,7 @@ def voxel_to_world(
     afid_voxel: AfidVoxel,
     nii_affine: NDArray[np.float_],
 ) -> AfidPosition:
-    """
-    Transform fiducials from world coordinates to voxel coordinates
+    """Transform fiducials from world coordinates to voxel coordinates
 
     Parameters
     ----------
@@ -88,3 +88,47 @@ def voxel_to_world(
         z=world_pos[2],
         desc=afid_voxel.desc,
     )
+
+
+def coord_system_xfm(
+    afid_set: AfidSet, new_coord_system: str = "RAS"
+) -> AfidSet:
+    """Convert AFID set between LPS and RAS coordinates
+
+    Parameters
+    ----------
+    afid_set
+        Object containing valid AfidSet
+
+    new_coord_sys
+        Convert AFID set to defined coordinate system (default: 'RAS')
+
+    Returns
+    -------
+    AfidSet
+        Object containing AFIDs stored in defined coordinate system
+
+    Raises
+    ------
+    ValueError
+        If invalid coordinate system, or if already in defined
+        cordinate system
+    """
+    if new_coord_system not in ["RAS", "LPS"]:
+        raise ValueError(
+            "Unrecognized coordinate system - please select RAS or LPS"
+        )
+
+    if afid_set.coord_system == new_coord_system:
+        raise ValueError(f"Already saved in {new_coord_system}")
+
+    # Create copy and update coordinate system
+    new_afid_set = deepcopy(afid_set)
+    new_afid_set.coord_system = new_coord_system
+
+    # Update afid positions
+    for idx in range(len(new_afid_set.afids)):
+        new_afid_set.afids[idx].x = -new_afid_set.afids[idx].x
+        new_afid_set.afids[idx].y = -new_afid_set.afids[idx].y
+
+    return new_afid_set

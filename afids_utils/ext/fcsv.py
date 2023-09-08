@@ -29,8 +29,7 @@ FCSV_FIELDNAMES: tuple[str] = (
 
 
 def _get_metadata(in_fcsv: list[str]) -> tuple[str, str]:
-    """
-    Internal function to extract metadata from header of fcsv files
+    """Internal function to extract metadata from header of fcsv files
 
     Parameters
     ----------
@@ -73,8 +72,7 @@ def _get_metadata(in_fcsv: list[str]) -> tuple[str, str]:
 
 
 def _get_afids(in_fcsv: list[str]) -> list[AfidPosition]:
-    """
-    Internal function for converting .fcsv file to a pl.DataFrame
+    """Internal function for grabbing AFID positions from .fcsv file
 
     Parameters
     ----------
@@ -109,8 +107,7 @@ def _get_afids(in_fcsv: list[str]) -> list[AfidPosition]:
 def load_fcsv(
     fcsv_path: PathLike[str] | str,
 ) -> tuple[str, str, list[AfidPosition]]:
-    """
-    Read in fcsv to an AfidSet
+    """Read in fcsv and extract relevant information for an AfidSet
 
     Parameters
     ----------
@@ -143,8 +140,7 @@ def save_fcsv(
     afid_set: AfidSet,
     out_fcsv: PathLike[str] | str,
 ) -> None:
-    """
-    Save fiducials to output fcsv file
+    """Save fiducials to output fcsv file
 
     Parameters
     ----------

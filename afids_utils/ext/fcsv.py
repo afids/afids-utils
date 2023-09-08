@@ -149,11 +149,6 @@ def save_fcsv(
 
     out_fcsv
         Path of fcsv file to save AFIDs to
-
-    Raises
-    ------
-    TypeError
-        If number of fiducials to write does not match expected number
     """
     # Read in fcsv template
     with resources.open_text(

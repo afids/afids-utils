@@ -1,4 +1,5 @@
 ```{include} ../README.md
+
 ```
 
 ```{toctree}
@@ -8,8 +9,10 @@
 :maxdepth: 1
 
 api/afids
+api/metrics
 api/transform
 ```
+
 ```{toctree}
 :caption: Exceptions
 :name: afids_exceptions

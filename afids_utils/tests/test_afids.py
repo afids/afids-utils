@@ -39,19 +39,10 @@ class TestAfidPosition:
     def test_valid_position(self, pos: AfidPosition):
         """Just checks that a hypothesis-generated AfidsPosition inits."""
 
-    @given(
-        pos1=af_st.afid_positions(label=1), pos2=af_st.afid_positions(label=1)
-    )
+    @given(pos1=af_st.afid_positions(), pos2=af_st.afid_positions())
     def test_valid_distance(self, pos1: AfidPosition, pos2: AfidPosition):
         """Check that a subtraction between corresponding AFIDs possible"""
         assert pos1 - pos2
-
-    @given(
-        pos1=af_st.afid_positions(label=1), pos2=af_st.afid_positions(label=2)
-    )
-    def test_invalid_distance(self, pos1: AfidPosition, pos2: AfidPosition):
-        with pytest.raises(ValueError, match=r"Non-corresponding .*"):
-            pos1 - pos2
 
     @given(
         label=st.integers().filter(lambda label: label not in range(1, 33)),

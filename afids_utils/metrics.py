@@ -1,14 +1,14 @@
 """Methods for computing various metrics pertaining to AFIDs"""
 from __future__ import annotations
 
-from afids_utils.afids import AfidPosition
+from afids_utils.afids import AfidDistance, AfidPosition
 
 
-def compute_AFLE(
+def compute_distance(
     afid_position: AfidPosition, template_position: AfidPosition
-) -> tuple[float, float, float, float]:
-    """Compute distance errors along each spatial dimension and
-    AFID localizaton error (AFLE)
+) -> AfidDistance:
+    """Compute distance between two AfidPositions, returning Euclidean
+    distance, as well as distances along each spatial dimension
 
     Parameters
     ----------
@@ -17,16 +17,23 @@ def compute_AFLE(
         (x, y, z)
 
     template_position
-        Template AfidPosition to compute AFLE against
+        Template AfidPosition to compute distance against
 
     Returns
     -------
-    tuple[float, float, float, float]
-        Distance errors along each spatial dimension (x, y, z) and
-        AFLE respectively
+    AfidDistance
+        Object containing distances along each spatial dimension
+        (x, y, z) and Euclidean distance respectively
     """
-    # Compute distances and AFLE
+    # Compute distances
     x_dist, y_dist, z_dist = afid_position - template_position
-    afle = (x_dist**2 + y_dist**2 + z_dist**2) ** 0.5
+    euc = (x_dist**2 + y_dist**2 + z_dist**2) ** 0.5
 
-    return x_dist, y_dist, z_dist, afle
+    return AfidDistance(
+        label=afid_position.label,
+        desc=afid_position.desc,
+        x=x_dist,
+        y=y_dist,
+        z=z_dist,
+        euc=euc,
+    )

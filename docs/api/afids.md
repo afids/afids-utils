@@ -7,6 +7,12 @@
 ```
 
 ```{eval-rst}
+    .. autoclass:: afids_utils.afids.AfidDistance
+        :members:
+        :exclude-members: label, desc, x, y, z, euc
+```
+
+```{eval-rst}
     .. autoclass:: afids_utils.afids.AfidVoxel
         :members:
         :exclude-members: label, desc, i, j, k

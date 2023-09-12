@@ -60,10 +60,6 @@ class AfidPosition:
     desc: str = attrs.field(validator=_validate_desc)
 
     def __sub__(self, other: AfidPosition) -> tuple[float, float, float]:
-        # Check if computation performed on corresponding AFIDs
-        if not self.label == other.label or not self.desc == other.desc:
-            raise ValueError("Non-corresponding AFIDs")
-
         # Compute distances
         x_dist = self.x - other.x
         y_dist = self.y - other.y

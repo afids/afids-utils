@@ -54,11 +54,11 @@ def _get_metadata(
 
     # Transform coordinate system so human-understandable
     if parsed_coord == "0":
-        parsed_coord = "LPS"
-    elif parsed_coord == "1":
         parsed_coord = "RAS"
+    elif parsed_coord == "1":
+        parsed_coord = "LPS"
 
-    if parsed_coord not in ["LPS", "RAS"]:
+    if parsed_coord not in ["RAS", "LPS"]:
         raise InvalidFileError("Invalid coordinate system")
 
     return parsed_version, parsed_coord

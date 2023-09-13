@@ -196,7 +196,7 @@ class TestSaveFcsv:
 
 
 class TestLoadJson:
-    @given(coord=st.sampled_from(["LPS", "RAS", "0", "1"]))
+    @given(coord=st.sampled_from(["RAS", "LPS", "0", "1"]))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
@@ -226,10 +226,10 @@ class TestLoadJson:
         assert parsed_ver == "Unknown"
 
         # Check to make sure coordinate system is correct
-        if coord in ["0" or "LPS"]:
-            assert parsed_coord == "LPS"
-        elif coord in ["1" or "RAS"]:
+        if coord in ["0" or "RAS"]:
             assert parsed_coord == "RAS"
+        elif coord in ["1" or "LPS"]:
+            assert parsed_coord == "LPS"
 
     @given(coord_num=st.integers(min_value=2))
     @settings(
@@ -271,7 +271,7 @@ class TestLoadJson:
     def test_json_invalid_str_coord(
         self, valid_json_file: PathLike[str], coord_str: str
     ):
-        assume(coord_str not in ["LPS", "RAS"])
+        assume(coord_str not in ["RAS", "LPS"])
 
         with open(valid_json_file) as valid_json:
             afids_json = json.load(valid_json)

@@ -216,11 +216,11 @@ class AfidSet:
         out_fpath_ext = Path(out_fpath).suffix
 
         # Update coordinate system for template
-        if self.coord_system not in ["LPS", "RAS", "0", "1"]:
+        if self.coord_system not in ["RAS", "LPS", "0", "1"]:
             raise ValueError("AfidSet contains an invalid coordinate system")
-        elif self.coord_system == "LPS":
-            self.coord_system = "0"
         elif self.coord_system == "RAS":
+            self.coord_system = "0"
+        elif self.coord_system == "LPS":
             self.coord_system = "1"
 
         # Saving fcsv

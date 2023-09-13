@@ -74,7 +74,7 @@ class TestAfidPosition:
 class TestAfidSet:
     @given(
         slicer_version=st.from_regex(r"\d\.\d+"),
-        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(),
     )
     def test_valid_afid_set(
@@ -94,7 +94,7 @@ class TestAfidSet:
 
     @given(
         slicer_version=st.from_regex(r"\d\.\d+"),
-        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(complete=False),
     )
     def test_incomplete_afid_set(
@@ -112,7 +112,7 @@ class TestAfidSet:
 
     @given(
         slicer_version=st.from_regex(r"\d\.\d+"),
-        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(unique=False),
     )
     def test_repeated_afid_set(
@@ -130,7 +130,7 @@ class TestAfidSet:
 
     @given(
         slicer_version=st.from_regex(r"\d\.\d+"),
-        coord_system=st.sampled_from(["LPS", "RAS", "0", "1"]),
+        coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(unique=False, complete=False),
     )
     @example(  # ensure case of 32 AFIDs with repeats gets hit
@@ -321,7 +321,7 @@ class TestAfidsIO:
                 afid_set.save(out_file.name)
 
     @given(
-        afid_set=af_st.afid_sets(), coord_sys=st.sampled_from(["LPS", "RAS"])
+        afid_set=af_st.afid_sets(), coord_sys=st.sampled_from(["RAS", "LPS"])
     )
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
@@ -341,7 +341,7 @@ class TestAfidsIO:
                 saved_header = in_data[:3]
                 parsed_coord = re.split(r"\s", saved_header[1])[-2]
 
-                if coord_sys == "LPS":
+                if coord_sys == "RAS":
                     assert parsed_coord == "0"
                 else:
                     assert parsed_coord == "1"

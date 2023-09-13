@@ -90,9 +90,9 @@ def voxel_to_world(
 
 
 def xfm_coord_system(
-    afid_set: AfidSet, new_coord_system: str = "RAS"
+    afid_set: AfidSet, new_coord_system: str = "LPS"
 ) -> AfidSet:
-    """Convert AFID set between LPS and RAS coordinates
+    """Convert AFID set between RAS and LPS coordinates
 
     Parameters
     ----------
@@ -100,7 +100,7 @@ def xfm_coord_system(
         Object containing valid AfidSet
 
     new_coord_system
-        Convert AFID set to defined coordinate system (default: 'RAS')
+        Convert AFID set to defined coordinate system (default: 'LPS')
 
     Returns
     -------

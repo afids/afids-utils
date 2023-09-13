@@ -129,7 +129,7 @@ class TestXfmCoordSystem:
     )
     def test_same_coord_system(self, afid_set: AfidSet):
         assert afid_set == af_xfm.xfm_coord_system(
-            afid_set, new_coord_system="LPS"
+            afid_set, new_coord_system="RAS"
         )
 
     @given(afid_set=af_st.afid_sets(randomize_header=False))
@@ -139,9 +139,10 @@ class TestXfmCoordSystem:
     )
     def test_valid_new_coord_system(self, afid_set):
         new_afid_set = af_xfm.xfm_coord_system(afid_set)
+        print(afid_set.coord_system, new_afid_set.coord_system)
 
         assert isinstance(new_afid_set, AfidSet)
-        assert new_afid_set.coord_system == "RAS"
+        assert new_afid_set.coord_system == "LPS"
 
         for old_afid, new_afid in zip(afid_set.afids, new_afid_set.afids):
             assert (

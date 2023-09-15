@@ -159,13 +159,9 @@ class TestAfidSet:
 
 
 class TestAfidsIO:
-    @given(label=af_st.valid_labels())
+    @given(label=af_st.valid_labels(), ext=st.sampled_from(["fcsv", "json"]))
     @allow_function_scoped
-    def test_valid_load(
-        self,
-        valid_fcsv_file: PathLike[str],
-        label: int,
-    ):
+    def test_valid_load(self, valid_file: PathLike[str], label: int, ext: str):
         # Load valid file to check internal types
         afids_set = AfidSet.load(valid_file.with_suffix(f".{ext}"))
 
@@ -183,7 +179,6 @@ class TestAfidsIO:
             AfidSet.load("invalid/fpath.fcsv")
 
     @given(ext=af_st.short_ascii_text())
-    @allow_function_scoped
     def test_invalid_ext(self, ext: str):
         assume(not ext == "fcsv" or not ext == "json")
 
@@ -253,9 +248,7 @@ class TestAfidsIO:
                 AfidSet.load(out_fcsv_file.name)
 
     @given(ext=st.sampled_from(["fcsv", "json"]))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_valid_save(self, valid_file: PathLike[str], ext: str):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
@@ -265,10 +258,15 @@ class TestAfidsIO:
 
             assert Path(out_fcsv_file.name).exists()
 
-    @given(ext=af_st.short_ascii_text())
+    @given(
+        ext=st.sampled_from(["fcsv", "json"]),
+        invalid_ext=af_st.short_ascii_text(),
+    )
     @allow_function_scoped
-    def test_invalid_ext_save(self, valid_fcsv_file: PathLike[str], ext: str):
-        assume(not ext == "fcsv" or not ext == "json")
+    def test_invalid_ext_save(
+        self, valid_file: PathLike[str], ext: str, invalid_ext: str
+    ):
+        assume(not invalid_ext == "fcsv" or not invalid_ext == "json")
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix=f"_afids.{invalid_ext}"
@@ -277,9 +275,8 @@ class TestAfidsIO:
             with pytest.raises(ValueError, match="Unsupported file extension"):
                 afid_set.save(out_file.name)
 
-    @given(afid_set=af_st.afid_sets())
-    @allow_function_scoped
-    def test_save_invalid_coord_system(self, afid_set: AfidSet):
+    @given(afid_set=af_st.afid_sets(), ext=st.sampled_from(["fcsv", "json"]))
+    def test_save_invalid_coord_system(self, afid_set: AfidSet, ext: str):
         afid_set.coord_system = "invalid"
 
         with tempfile.NamedTemporaryFile(
@@ -293,7 +290,6 @@ class TestAfidsIO:
     @given(
         afid_set=af_st.afid_sets(), coord_sys=st.sampled_from(["RAS", "LPS"])
     )
-    @allow_function_scoped
     def test_update_coord_system(self, afid_set: AfidSet, coord_sys: str):
         afid_set.coord_system = coord_sys
 
@@ -318,8 +314,8 @@ class TestAfidsIO:
 class TestAfidsCore:
     @given(label=af_st.valid_labels())
     @allow_function_scoped
-    def test_valid_get_afid(self, valid_fcsv_file: PathLike[str], label: int):
-        afid_set = AfidSet.load(valid_fcsv_file)
+    def test_valid_get_afid(self, valid_file: PathLike[str], label: int):
+        afid_set = AfidSet.load(valid_file)
         afid_pos = afid_set.get_afid(label)
 
         # Check array type
@@ -327,10 +323,8 @@ class TestAfidsCore:
 
     @given(label=st.integers(min_value=-100, max_value=100))
     @allow_function_scoped
-    def test_invalid_get_afid(
-        self, valid_fcsv_file: PathLike[str], label: int
-    ):
-        afid_set = AfidSet.load(valid_fcsv_file)
+    def test_invalid_get_afid(self, valid_file: PathLike[str], label: int):
+        afid_set = AfidSet.load(valid_file)
         assume(not 1 <= label <= len(afid_set.afids))
 
         with pytest.raises(InvalidFiducialError, match=".*not valid"):

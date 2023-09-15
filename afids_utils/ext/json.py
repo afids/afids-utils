@@ -64,7 +64,7 @@ def _get_metadata(coord_system: str) -> tuple[str, str]:
     return parsed_version, parsed_coord
 
 
-def _get_afids(control_points: ControlPoint) -> list[AfidPosition]:
+def _get_afids(control_points: list[ControlPoint]) -> list[AfidPosition]:
     """Internal function to parse fiducial information from json file
 
     Parameters

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import tempfile
 from os import PathLike
@@ -9,16 +10,24 @@ import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
+import afids_utils.ext.fcsv as af_fcsv
+import afids_utils.ext.json as af_json
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
-from afids_utils.ext.fcsv import _get_afids, _get_metadata, save_fcsv
 from afids_utils.tests.strategies import afid_sets
 
 
 @pytest.fixture
-def valid_fcsv_file() -> PathLike[str]:
+def valid_fcsv_file() -> Path:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.fcsv"
+    )
+
+
+@pytest.fixture
+def valid_json_file() -> Path:
+    return (
+        Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.json"
     )
 
 
@@ -27,7 +36,7 @@ class TestLoadFcsv:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_get_valid_metadata(
+    def test_fcsv_get_valid_metadata(
         self, valid_fcsv_file: PathLike[str], coord_num: int
     ):
         # Randomize coordinate system
@@ -47,7 +56,7 @@ class TestLoadFcsv:
             temp_valid_fcsv_file.flush()
 
             with open(temp_valid_fcsv_file.name) as temp_in_fcsv:
-                parsed_ver, parsed_coord = _get_metadata(
+                parsed_ver, parsed_coord = af_fcsv._get_metadata(
                     temp_in_fcsv.readlines()
                 )
 
@@ -65,7 +74,7 @@ class TestLoadFcsv:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_num_coord(
+    def test_fcsv_invalid_num_coord(
         self, valid_fcsv_file: PathLike[str], coord_num: int
     ):
         with open(valid_fcsv_file) as valid_fcsv:
@@ -87,7 +96,7 @@ class TestLoadFcsv:
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
                 ):
-                    _get_metadata(temp_in_fcsv.readlines())
+                    af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
     @given(
         coord_str=st.text(
@@ -100,7 +109,7 @@ class TestLoadFcsv:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_str_coord(
+    def test_fcsv_invalid_str_coord(
         self, valid_fcsv_file: PathLike[str], coord_str: int
     ):
         assume(coord_str not in ["RAS", "LPS"])
@@ -124,9 +133,9 @@ class TestLoadFcsv:
                 with pytest.raises(
                     InvalidFileError, match="Invalid coordinate.*"
                 ):
-                    _get_metadata(temp_in_fcsv.readlines())
+                    af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
-    def test_invalid_header(self, valid_fcsv_file: PathLike[str]):
+    def test_fcsv_invalid_header(self, valid_fcsv_file: PathLike[str]):
         with open(valid_fcsv_file) as valid_fcsv:
             valid_fcsv_data = valid_fcsv.readlines()
             invalid_fcsv_data = valid_fcsv_data[0]
@@ -143,7 +152,7 @@ class TestLoadFcsv:
                 with pytest.raises(
                     InvalidFileError, match="Missing or invalid.*"
                 ):
-                    _get_metadata(temp_in_fcsv.readlines())
+                    af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
     @given(label=st.integers(min_value=0, max_value=31))
     @settings(
@@ -151,7 +160,7 @@ class TestLoadFcsv:
     )
     def test_valid_get_afids(self, valid_fcsv_file: PathLike[str], label: int):
         with open(valid_fcsv_file) as valid_fcsv:
-            afids_positions = _get_afids(valid_fcsv.readlines())
+            afids_positions = af_fcsv._get_afids(valid_fcsv.readlines())
 
         assert isinstance(afids_positions, list)
         assert isinstance(afids_positions[label], AfidPosition)
@@ -167,7 +176,7 @@ class TestSaveFcsv:
         afid_set: AfidSet,
     ):
         with pytest.raises(FileNotFoundError):
-            save_fcsv(afid_set, "/invalid/template/path.fcsv")
+            af_fcsv.save_fcsv(afid_set, "/invalid/template/path.fcsv")
 
     @given(afid_set=afid_sets(randomize_header=False))
     @settings(
@@ -178,9 +187,154 @@ class TestSaveFcsv:
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
         ) as out_fcsv_file:
             # Create and check output file
-            save_fcsv(afid_set, out_fcsv_file.name)
+            af_fcsv.save_fcsv(afid_set, out_fcsv_file.name)
 
             # Check if file loads correctly and contents are the same
             test_load = AfidSet.load(out_fcsv_file.name)
             assert test_load == afid_set
+            assert isinstance(test_load, AfidSet)
+
+
+class TestLoadJson:
+    @given(coord=st.sampled_from(["RAS", "LPS", "0", "1"]))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_json_get_valid_metadata(
+        self, valid_json_file: PathLike[str], coord: str
+    ):
+        # Randomize coordinate system
+        with open(valid_json_file) as valid_json:
+            afids_json = json.load(valid_json)
+            afids_json["markups"][0]["coordinateSystem"] = coord
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            prefix="sub-test_desc-",
+            suffix="_afids.json",
+        ) as temp_valid_json_file:
+            json.dump(afids_json, temp_valid_json_file, indent=4)
+            temp_valid_json_file.flush()
+
+            with open(temp_valid_json_file.name) as temp_in_json:
+                temp_afids_json = json.load(temp_in_json)
+                parsed_ver, parsed_coord = af_json._get_metadata(
+                    temp_afids_json["markups"][0]["coordinateSystem"]
+                )
+
+        # Check version is not given / unknown
+        assert parsed_ver == "Unknown"
+
+        # Check to make sure coordinate system is correct
+        if coord in ["0" or "RAS"]:
+            assert parsed_coord == "RAS"
+        elif coord in ["1" or "LPS"]:
+            assert parsed_coord == "LPS"
+
+    @given(coord_num=st.integers(min_value=2))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_json_invalid_num_coord(
+        self, valid_json_file: PathLike[str], coord_num: int
+    ):
+        with open(valid_json_file) as valid_json:
+            afids_json = json.load(valid_json)
+            afids_json["markups"][0]["coordinateSystem"] = str(coord_num)
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            prefix="sub-test_desc-",
+            suffix="_afids.json",
+        ) as temp_valid_json_file:
+            json.dump(afids_json, temp_valid_json_file, indent=4)
+            temp_valid_json_file.flush()
+
+            with open(temp_valid_json_file.name) as temp_in_json:
+                with pytest.raises(
+                    InvalidFileError, match=r"Invalid coordinate.*"
+                ):
+                    temp_afids_json = json.load(temp_in_json)
+                    af_json._get_metadata(temp_afids_json["markups"][0])
+
+    @given(
+        coord_str=st.text(
+            min_size=3,
+            alphabet=st.characters(
+                min_codepoint=ord("A"), max_codepoint=ord("z")
+            ),
+        )
+    )
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_json_invalid_str_coord(
+        self, valid_json_file: PathLike[str], coord_str: str
+    ):
+        assume(coord_str not in ["RAS", "LPS"])
+
+        with open(valid_json_file) as valid_json:
+            afids_json = json.load(valid_json)
+            afids_json["markups"][0]["coordinateSystem"] = coord_str
+
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            prefix="sub-test_desc-",
+            suffix="_afids.json",
+        ) as temp_valid_json_file:
+            json.dump(afids_json, temp_valid_json_file, indent=4)
+            temp_valid_json_file.flush()
+
+            with open(temp_valid_json_file.name) as temp_in_json:
+                with pytest.raises(
+                    InvalidFileError, match=r"Invalid coordinate.*"
+                ):
+                    temp_afids_json = json.load(temp_in_json)
+                    af_json._get_metadata(temp_afids_json["markups"][0])
+
+    @given(label=st.integers(min_value=0, max_value=31))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_json_valid_get_afids(
+        self, valid_json_file: PathLike[str], label: int
+    ):
+        with open(valid_json_file) as valid_json:
+            afids_json = json.load(valid_json)
+            afids_positions = af_json._get_afids(
+                afids_json["markups"][0]["controlPoints"]
+            )
+
+        assert isinstance(afids_positions, list)
+        assert isinstance(afids_positions[label], AfidPosition)
+
+
+class TestSaveJson:
+    @given(afid_set=afid_sets())
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_save_json_invalid_template(
+        self,
+        afid_set: AfidSet,
+    ):
+        with pytest.raises(FileNotFoundError):
+            af_json.save_json(afid_set, "/invalid/template/path.json")
+
+    @given(afid_set=afid_sets(randomize_header=False))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_save_json_valid_template(self, afid_set: AfidSet):
+        with tempfile.NamedTemporaryFile(
+            mode="w", prefix="sub-test_desc-", suffix="_afids.json"
+        ) as out_json_file:
+            # Create and check output file
+            af_json.save_json(afid_set, out_json_file.name)
+
+            # Check if file loads correctly and contents are the same
+            # (except for the version)
+            test_load = AfidSet.load(out_json_file.name)
+            assert test_load.coord_system == afid_set.coord_system
+            assert test_load.afids == afid_set.afids
             assert isinstance(test_load, AfidSet)

@@ -178,8 +178,12 @@ class AfidSet:
                 afids_fpath
             )
         # Loading json
-        # if afids_fpath_ext = ".json":
-        #   load_json(afids_path)
+        elif afids_fpath_ext == ".json":
+            from afids_utils.ext.json import load_json
+
+            slicer_version, coord_system, afids_positions = load_json(
+                afids_fpath
+            )
         else:
             raise ValueError("Unsupported file extension")
 
@@ -229,8 +233,10 @@ class AfidSet:
 
             save_fcsv(self, out_fpath)
         # Saving json
-        # if out_fpath_ext = ".json":
-        #   save_json(afids_coords, out_fpath)
+        elif out_fpath_ext == ".json":
+            from afids_utils.ext.json import save_json
+
+            save_json(self, out_fpath)
         else:
             raise ValueError("Unsupported file extension")
 

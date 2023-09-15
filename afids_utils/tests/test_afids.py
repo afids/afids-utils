@@ -18,7 +18,7 @@ from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 
 
 @pytest.fixture
-def valid_fcsv_file() -> PathLike[str]:
+def valid_file() -> Path:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.fcsv"
     )
@@ -158,17 +158,16 @@ class TestAfidSet:
 
 
 class TestAfidsIO:
-    @given(label=st.integers(min_value=0, max_value=31))
+    @given(
+        label=st.integers(min_value=0, max_value=31),
+        ext=st.sampled_from(["fcsv", "json"]),
+    )
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_valid_load(
-        self,
-        valid_fcsv_file: PathLike[str],
-        label: int,
-    ):
+    def test_valid_load(self, valid_file: PathLike[str], label: int, ext: str):
         # Load valid file to check internal types
-        afids_set = AfidSet.load(valid_fcsv_file)
+        afids_set = AfidSet.load(valid_file.with_suffix(f".{ext}"))
 
         # Check correct type created after loading
         assert isinstance(afids_set, AfidSet)
@@ -195,7 +194,7 @@ class TestAfidsIO:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_ext(self, valid_fcsv_file: PathLike[str], ext: str):
+    def test_invalid_ext(self, valid_file: PathLike[str], ext: str):
         assume(not ext == "fcsv" or not ext == "json")
 
         with tempfile.NamedTemporaryFile(
@@ -206,9 +205,9 @@ class TestAfidsIO:
             with pytest.raises(ValueError, match="Unsupported .* extension"):
                 AfidSet.load(invalid_file_ext.name)
 
-    def test_invalid_label_range(self, valid_fcsv_file: PathLike[str]):
+    def test_invalid_label_range(self, valid_file: PathLike[str]):
         # Create additional line of fiducials
-        with open(valid_fcsv_file) as valid_fcsv:
+        with open(valid_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
             fcsv_data.append(fcsv_data[-1])
 
@@ -239,7 +238,7 @@ class TestAfidsIO:
     )
     def test_invalid_desc(
         self,
-        valid_fcsv_file: PathLike[str],
+        valid_file: PathLike[str],
         human_mappings: list[list[str] | str],
         label: int,
         desc: str,
@@ -253,7 +252,7 @@ class TestAfidsIO:
         )
 
         # Replace valid description with a mismatch
-        with open(valid_fcsv_file) as valid_fcsv:
+        with open(valid_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
             fcsv_data[label + 3] = fcsv_data[label + 3].replace(
                 human_mappings[label]["desc"], desc
@@ -274,46 +273,53 @@ class TestAfidsIO:
             ):
                 AfidSet.load(out_fcsv_file.name)
 
-    def test_valid_save(self, valid_fcsv_file: PathLike[str]):
+    @given(ext=st.sampled_from(["fcsv", "json"]))
+    @settings(
+        suppress_health_check=[HealthCheck.function_scoped_fixture],
+    )
+    def test_valid_save(self, valid_file: PathLike[str], ext: str):
         with tempfile.NamedTemporaryFile(
-            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+            mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
         ) as out_fcsv_file:
-            afids_set = AfidSet.load(valid_fcsv_file)
+            afids_set = AfidSet.load(valid_file.with_suffix(f".{ext}"))
             afids_set.save(out_fcsv_file.name)
 
             assert Path(out_fcsv_file.name).exists()
 
     @given(
-        ext=st.text(
+        ext=st.sampled_from(["fcsv", "json"]),
+        invalid_ext=st.text(
             min_size=2,
             max_size=5,
             alphabet=st.characters(
                 min_codepoint=ord("A"), max_codepoint=ord("z")
             ),
-        )
+        ),
     )
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_ext_save(self, valid_fcsv_file: PathLike[str], ext: str):
-        assume(not ext == "fcsv" or not ext == "json")
+    def test_invalid_ext_save(
+        self, valid_file: PathLike[str], ext: str, invalid_ext: str
+    ):
+        assume(not invalid_ext == "fcsv" or not invalid_ext == "json")
 
         with tempfile.NamedTemporaryFile(
-            mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
+            mode="w", prefix="sub-test_desc-", suffix=f"_afids.{invalid_ext}"
         ) as out_file:
-            afid_set = AfidSet.load(valid_fcsv_file)
+            afid_set = AfidSet.load(valid_file.with_suffix(f".{ext}"))
             with pytest.raises(ValueError, match="Unsupported file extension"):
                 afid_set.save(out_file.name)
 
-    @given(afid_set=af_st.afid_sets())
+    @given(afid_set=af_st.afid_sets(), ext=st.sampled_from(["fcsv", "json"]))
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_save_invalid_coord_system(self, afid_set: AfidSet):
+    def test_save_invalid_coord_system(self, afid_set: AfidSet, ext: str):
         afid_set.coord_system = "invalid"
 
         with tempfile.NamedTemporaryFile(
-            mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
+            mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
         ) as out_file:
             with pytest.raises(
                 ValueError, match=".*invalid coordinate system"
@@ -352,8 +358,8 @@ class TestAfidsCore:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_valid_get_afid(self, valid_fcsv_file: PathLike[str], label: int):
-        afid_set = AfidSet.load(valid_fcsv_file)
+    def test_valid_get_afid(self, valid_file: PathLike[str], label: int):
+        afid_set = AfidSet.load(valid_file)
         afid_pos = afid_set.get_afid(label)
 
         # Check array type
@@ -363,10 +369,8 @@ class TestAfidsCore:
     @settings(
         suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
-    def test_invalid_get_afid(
-        self, valid_fcsv_file: PathLike[str], label: int
-    ):
-        afid_set = AfidSet.load(valid_fcsv_file)
+    def test_invalid_get_afid(self, valid_file: PathLike[str], label: int):
+        afid_set = AfidSet.load(valid_file)
         assume(not 1 <= label <= len(afid_set.afids))
 
         with pytest.raises(InvalidFiducialError, match=".*not valid"):

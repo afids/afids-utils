@@ -104,7 +104,7 @@ def afid_sets(
     randomize_header: bool = True,
 ) -> AfidSet:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))
-    coord_system = draw(st.sampled_from(["LPS", "RAS", "0", "1"]))
+    coord_system = draw(st.sampled_from(["RAS", "LPS", "0", "1"]))
 
     # Set (in)valid number of Afid coordinates in a list
     afid_pos = []
@@ -142,7 +142,7 @@ def afid_sets(
     # Create AfidSet
     st_afid_set = AfidSet(
         slicer_version=slicer_version if randomize_header else "4.6",
-        coord_system=coord_system if randomize_header else "LPS",
+        coord_system=coord_system if randomize_header else "RAS",
         afids=afid_pos,
     )
 

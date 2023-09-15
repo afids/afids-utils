@@ -57,9 +57,9 @@ class TestLoadFcsv:
 
         # Check to make sure coordinate system is correct
         if coord_num == 0:
-            assert parsed_coord == "LPS"
-        else:
             assert parsed_coord == "RAS"
+        else:
+            assert parsed_coord == "LPS"
 
     @given(coord_num=st.integers(min_value=2))
     @settings(
@@ -103,7 +103,7 @@ class TestLoadFcsv:
     def test_invalid_str_coord(
         self, valid_fcsv_file: PathLike[str], coord_str: int
     ):
-        assume(coord_str not in ["LPS", "RAS"])
+        assume(coord_str not in ["RAS", "LPS"])
 
         with open(valid_fcsv_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()

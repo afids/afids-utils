@@ -18,7 +18,7 @@ with resources.open_text(
     HUMAN_PROTOCOL_MAP = json.load(json_fpath)["human"]
 
 
-def gen_chars():
+def short_ascii_text():
     return st.text(
         min_size=2,
         max_size=5,

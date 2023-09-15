@@ -182,7 +182,7 @@ class TestAfidsIO:
         with pytest.raises(FileNotFoundError, match=".*does not exist"):
             AfidSet.load("invalid/fpath.fcsv")
 
-    @given(ext=af_st.gen_chars())
+    @given(ext=af_st.short_ascii_text())
     @allow_function_scoped
     def test_invalid_ext(self, ext: str):
         assume(not ext == "fcsv" or not ext == "json")
@@ -213,7 +213,7 @@ class TestAfidsIO:
             with pytest.raises(InvalidFileError, match="Unexpected number.*"):
                 AfidSet.load(out_fcsv_file.name)
 
-    @given(label=af_st.valid_labels(), desc=af_st.gen_chars())
+    @given(label=af_st.valid_labels(), desc=af_st.short_ascii_text())
     @allow_function_scoped
     def test_invalid_desc(
         self,
@@ -265,7 +265,7 @@ class TestAfidsIO:
 
             assert Path(out_fcsv_file.name).exists()
 
-    @given(ext=af_st.gen_chars())
+    @given(ext=af_st.short_ascii_text())
     @allow_function_scoped
     def test_invalid_ext_save(self, valid_fcsv_file: PathLike[str], ext: str):
         assume(not ext == "fcsv" or not ext == "json")

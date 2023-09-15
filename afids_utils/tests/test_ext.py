@@ -94,7 +94,7 @@ class TestLoadFcsv:
                 ):
                     af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
-    @given(coord_str=af_st.gen_chars())
+    @given(coord_str=af_st.short_ascii_text())
     @allow_function_scoped
     def test_invalid_str_coord(
         self, valid_fcsv_file: PathLike[str], coord_str: int

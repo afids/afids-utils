@@ -18,7 +18,7 @@ from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 
 
 @pytest.fixture
-def valid_file() -> PathLike[str]:
+def valid_file() -> Path:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.fcsv"
     )

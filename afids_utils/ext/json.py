@@ -5,11 +5,13 @@ import json
 from importlib import resources
 from os import PathLike
 
+from typing_extensions import TypedDict
+
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
 
 
-class ControlPoint:
+class ControlPoint(TypedDict):
     id: str
     label: str
     description: str
@@ -22,17 +24,15 @@ class ControlPoint:
     positionStatus: str
 
 
-def _get_metadata(
-    in_json: dict[str, bool | float | str | list[float]]
-) -> tuple[str, str]:
+def _get_metadata(coord_system: str) -> tuple[str, str]:
     """Internal function to extract metadata from json files
 
     Note: Slicer version is not currently included in the json file
 
     Parameters:
     -----------
-    in_json
-        Data from provided json file to parse metadata from
+    coord_system
+        Coordinate system parsed from json_file
 
     Returns
     -------
@@ -50,7 +50,7 @@ def _get_metadata(
 
     # Update if future json versions include Slicer version
     parsed_version = "Unknown"
-    parsed_coord = in_json["coordinateSystem"]
+    parsed_coord = coord_system
 
     # Transform coordinate system so human-understandable
     if parsed_coord == "0":
@@ -64,22 +64,29 @@ def _get_metadata(
     return parsed_version, parsed_coord
 
 
-def _get_afids(
-    in_json: dict[str, bool | float | str | list[float]]
-) -> list[AfidPosition]:
-    afids = in_json["controlPoints"]
+def _get_afids(control_points: ControlPoint) -> list[AfidPosition]:
+    """Internal function to parse fiducial information from json file
 
-    afids_positions = []
-    for afid in afids:
-        afids_positions.append(
-            AfidPosition(
-                label=int(afid["label"]),
-                x=float(afid["position"][0]),
-                y=float(afid["position"][1]),
-                z=float(afid["position"][2]),
-                desc=afid["description"],
-            )
+    Parameters
+    ----------
+    ctrl_points
+        List of dicts containing fiducial information from parsed json file
+
+    Returns
+    -------
+    afid_positions
+        List containing spatial position of afids
+    """
+    afids_positions = [
+        AfidPosition(
+            label=int(afid["label"]),
+            x=float(afid["position"][0]),
+            y=float(afid["position"][1]),
+            z=float(afid["position"][2]),
+            desc=afid["description"],
         )
+        for afid in control_points
+    ]
 
     return afids_positions
 
@@ -109,9 +116,11 @@ def load_json(
         afids_json = json.load(json_file)
 
     # Grab metadata
-    slicer_version, coord_system = _get_metadata(afids_json["markups"][0])
+    slicer_version, coord_system = _get_metadata(
+        afids_json["markups"][0]["coordinateSystem"]
+    )
     # Grab afids
-    afids_positions = _get_afids(afids_json["markups"][0])
+    afids_positions = _get_afids(afids_json["markups"][0]["controlPoints"])
 
     return slicer_version, coord_system, afids_positions
 

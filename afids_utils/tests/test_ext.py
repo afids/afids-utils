@@ -18,14 +18,14 @@ from afids_utils.tests.strategies import afid_sets
 
 
 @pytest.fixture
-def valid_fcsv_file() -> PathLike[str]:
+def valid_fcsv_file() -> Path:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.fcsv"
     )
 
 
 @pytest.fixture
-def valid_json_file() -> PathLike[str]:
+def valid_json_file() -> Path:
     return (
         Path(__file__).parent / "data" / "tpl-MNI152NLin2009cAsym_afids.json"
     )
@@ -219,7 +219,7 @@ class TestLoadJson:
             with open(temp_valid_json_file.name) as temp_in_json:
                 temp_afids_json = json.load(temp_in_json)
                 parsed_ver, parsed_coord = af_json._get_metadata(
-                    temp_afids_json["markups"][0]
+                    temp_afids_json["markups"][0]["coordinateSystem"]
                 )
 
         # Check version is not given / unknown
@@ -301,7 +301,9 @@ class TestLoadJson:
     ):
         with open(valid_json_file) as valid_json:
             afids_json = json.load(valid_json)
-            afids_positions = af_json._get_afids(afids_json["markups"][0])
+            afids_positions = af_json._get_afids(
+                afids_json["markups"][0]["controlPoints"]
+            )
 
         assert isinstance(afids_positions, list)
         assert isinstance(afids_positions[label], AfidPosition)

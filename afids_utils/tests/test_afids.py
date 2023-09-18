@@ -374,9 +374,14 @@ class TestAfidsDistanceSet:
         )
 
         # Check afids property is correct (list[AfidDistances])
-        assert isinstance(afid_distance_set.afids, list)
-        for idx in range(len(afid_set1.afids)):
-            assert isinstance(afid_distance_set.afids[idx], AfidDistance)
+        assert isinstance(afid_distance_set.afids, list) and all(
+            list(
+                map(
+                    lambda x: isinstance(x, AfidDistance),
+                    afid_distance_set.afids,
+                )
+            )
+        )
 
     @given(
         afid_set1=af_st.afid_sets(randomize_header=False),

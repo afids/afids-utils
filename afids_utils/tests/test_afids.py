@@ -12,7 +12,7 @@ from hypothesis import strategies as st
 from more_itertools import pairwise
 
 import afids_utils.tests.strategies as af_st
-from afids_utils.afids import AfidPosition, AfidSet
+from afids_utils.afids import AfidDistance, AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 from afids_utils.tests.helpers import allow_function_scoped
 
@@ -38,11 +38,6 @@ class TestAfidPosition:
     @given(pos=af_st.afid_positions())
     def test_valid_position(self, pos: AfidPosition):
         """Just checks that a hypothesis-generated AfidsPosition inits."""
-
-    @given(pos1=af_st.afid_positions(), pos2=af_st.afid_positions())
-    def test_valid_distance(self, pos1: AfidPosition, pos2: AfidPosition):
-        """Check that a subtraction between corresponding AFIDs possible"""
-        assert pos1 - pos2
 
     @given(
         label=st.integers().filter(lambda label: label not in range(1, 33)),
@@ -157,6 +152,37 @@ class TestAfidSet:
                 coord_system=coord_system,
                 afids=positions,
             )
+
+
+class TestAfidsDistance:
+    @given(
+        afid1=af_st.afid_positions(label=1),
+        afid2=af_st.afid_positions(label=1),
+    )
+    def test_same_labels(self, afid1: AfidPosition, afid2: AfidPosition):
+        afid_distance = AfidDistance(
+            afid_position1=afid1, afid_position2=afid2
+        )
+
+        # Check output and properties
+        assert isinstance(afid_distance, AfidDistance)
+        assert isinstance(afid_distance.x, float)
+        assert isinstance(afid_distance.z, float)
+        assert isinstance(afid_distance.y, float)
+        assert (
+            isinstance(afid_distance.distance, float)
+            and afid_distance.distance >= 0
+        )
+
+    @given(
+        afid1=af_st.afid_positions(),
+        afid2=af_st.afid_positions(),
+    )
+    def test_diff_labels(self, afid1: AfidPosition, afid2: AfidPosition):
+        assume(afid1.label != afid2.label)
+
+        with pytest.warns(UserWarning, match=r".*non-corresponding AFIDs"):
+            AfidDistance(afid_position1=afid1, afid_position2=afid2)
 
 
 class TestAfidsIO:

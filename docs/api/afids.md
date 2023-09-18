@@ -9,7 +9,12 @@
 ```{eval-rst}
     .. autoclass:: afids_utils.afids.AfidDistance
         :members:
-        :exclude-members: label, desc, x, y, z, euc
+        :exclude-members: afid_position1, afid_position2, x, y, z, distance
+
+    .. autoproperty:: afids_utils.afids.AfidDistance.x
+    .. autoproperty:: afids_utils.afids.AfidDistance.y
+    .. autoproperty:: afids_utils.afids.AfidDistance.z
+    .. autoproperty:: afids_utils.afids.AfidDistance.distance
 ```
 
 ```{eval-rst}

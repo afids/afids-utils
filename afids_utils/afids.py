@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+import warnings
 from importlib import resources
 from os import PathLike
 from pathlib import Path
@@ -98,6 +99,56 @@ def _validate_afids(
             ]
         )
         raise ValueError(msg)
+
+
+@attrs.define()
+class AfidDistance:
+    """Class to store distances between two ``AfidPosition`` objects
+
+    Parameters
+    ----------
+    afid_position1
+        An AfidPosition object containing floating-point spatial coordinates
+        (x, y, z)
+
+    afid_position2
+        Other AfidPosition object containing floating-point spatial
+        coordinates (x, y, z) to compute distance against
+    """
+
+    afid_position1: AfidPosition = attrs.field()
+    afid_position2: AfidPosition = attrs.field()
+
+    def __attrs_post_init__(self):
+        # Always throw warning if label/desc don't match between AFIDs
+        if (self.afid_position1.label, self.afid_position1.desc) != (
+            self.afid_position2.label,
+            self.afid_position2.desc,
+        ):
+            warnings.simplefilter("always", category=UserWarning)
+            warnings.warn(
+                "Computing distances between non-corresponding AFIDs"
+            )
+
+    @property
+    def x(self):
+        """Floating-point distance between AFIDs along x-axis"""
+        return self.afid_position1.x - self.afid_position2.x
+
+    @property
+    def y(self):
+        """Floating-point distance between AFIDs along y-axis"""
+        return self.afid_position1.y - self.afid_position2.y
+
+    @property
+    def z(self):
+        """Floating-point distance between AFIDs along z-axis"""
+        return self.afid_position1.z - self.afid_position2.z
+
+    @property
+    def distance(self):
+        """Floating-point distance between a pair of AFIDs"""
+        return (self.x**2 + self.y**2 + self.z**2) ** 0.5
 
 
 @attrs.define

@@ -101,56 +101,6 @@ def _validate_afids(
         raise ValueError(msg)
 
 
-@attrs.define()
-class AfidDistance:
-    """Class to store distances between two ``AfidPosition`` objects
-
-    Parameters
-    ----------
-    afid_position1
-        An AfidPosition object containing floating-point spatial coordinates
-        (x, y, z)
-
-    afid_position2
-        Other AfidPosition object containing floating-point spatial
-        coordinates (x, y, z) to compute distance against
-    """
-
-    afid_position1: AfidPosition = attrs.field()
-    afid_position2: AfidPosition = attrs.field()
-
-    def __attrs_post_init__(self):
-        # Always throw warning if label/desc don't match between AFIDs
-        if (self.afid_position1.label, self.afid_position1.desc) != (
-            self.afid_position2.label,
-            self.afid_position2.desc,
-        ):
-            warnings.simplefilter("always", category=UserWarning)
-            warnings.warn(
-                "Computing distances between non-corresponding AFIDs"
-            )
-
-    @property
-    def x(self):
-        """Floating-point distance between AFIDs along x-axis"""
-        return self.afid_position1.x - self.afid_position2.x
-
-    @property
-    def y(self):
-        """Floating-point distance between AFIDs along y-axis"""
-        return self.afid_position1.y - self.afid_position2.y
-
-    @property
-    def z(self):
-        """Floating-point distance between AFIDs along z-axis"""
-        return self.afid_position1.z - self.afid_position2.z
-
-    @property
-    def distance(self):
-        """Floating-point distance between a pair of AFIDs"""
-        return (self.x**2 + self.y**2 + self.z**2) ** 0.5
-
-
 @attrs.define
 class AfidVoxel:
     """Class for Afid voxel position
@@ -318,7 +268,7 @@ class AfidSet:
 
         Returns
         -------
-        afid_position
+        AfidPosition
             Spatial position of Afid (as class AfidPosition)
 
         Raises
@@ -332,3 +282,94 @@ class AfidSet:
             raise InvalidFiducialError(f"AFID label {label} is not valid")
 
         return self.afids[label - 1]
+
+
+@attrs.define()
+class AfidDistance:
+    """Class to store distances between two ``AfidPosition`` objects
+
+    Parameters
+    ----------
+    afid_position1
+        An AfidPosition object containing floating-point spatial coordinates
+        (x, y, z)
+
+    afid_position2
+        Other AfidPosition object containing floating-point spatial
+        coordinates (x, y, z) to compute distance against
+    """
+
+    afid_position1: AfidPosition = attrs.field()
+    afid_position2: AfidPosition = attrs.field()
+
+    def __attrs_post_init__(self):
+        # Always throw warning if label/desc don't match between AFIDs
+        if (self.afid_position1.label, self.afid_position1.desc) != (
+            self.afid_position2.label,
+            self.afid_position2.desc,
+        ):
+            warnings.simplefilter("always", category=UserWarning)
+            warnings.warn(
+                "Computing distances between non-corresponding AFIDs"
+            )
+
+    @property
+    def x(self):
+        """Floating-point distance between AFIDs along x-axis"""
+        return self.afid_position1.x - self.afid_position2.x
+
+    @property
+    def y(self):
+        """Floating-point distance between AFIDs along y-axis"""
+        return self.afid_position1.y - self.afid_position2.y
+
+    @property
+    def z(self):
+        """Floating-point distance between AFIDs along z-axis"""
+        return self.afid_position1.z - self.afid_position2.z
+
+    @property
+    def distance(self):
+        """Floating-point distance between a pair of AFIDs"""
+        return (self.x**2 + self.y**2 + self.z**2) ** 0.5
+
+
+@attrs.define()
+class AfidDistanceSet:
+    """Class to store distances between a pair of valid ``AfidSet`` objects
+
+    Parameters
+    ----------
+    afid_set1
+        One set of anatomical fiducials containing coordinates and metadata
+
+    afid_set2
+        Another set of anatomical fiducials containing coordinates and metadata
+    """
+
+    afid_set1: AfidSet = attrs.field()
+    afid_set2: AfidSet = attrs.field()
+
+    @property
+    def afids(self):
+        """List of distances of corresponding AFIDs between the two ``AfidSet``
+        objects
+
+        Raises
+        ------
+        ValueError
+            If coordinate systems are mismatched between ``AfidSet`` objects
+        """
+        # Check if the coordinate systems match
+        if self.afid_set1.coord_system != self.afid_set2.coord_system:
+            raise ValueError("Mismatched coordinate systems")
+
+        # Compute distances between AfidSets
+        afids = [
+            AfidDistance(afid_set1_position, afid_set2_position)
+            for afid_set1_position, afid_set2_position in zip(
+                self.afid_set1.afids, self.afid_set2.afids
+            )
+        ]
+
+        return afids

@@ -12,7 +12,12 @@ from hypothesis import strategies as st
 from more_itertools import pairwise
 
 import afids_utils.tests.strategies as af_st
-from afids_utils.afids import AfidDistance, AfidPosition, AfidSet
+from afids_utils.afids import (
+    AfidDistance,
+    AfidDistanceSet,
+    AfidPosition,
+    AfidSet,
+)
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
 from afids_utils.tests.helpers import allow_function_scoped
 
@@ -152,37 +157,6 @@ class TestAfidSet:
                 coord_system=coord_system,
                 afids=positions,
             )
-
-
-class TestAfidsDistance:
-    @given(
-        afid1=af_st.afid_positions(label=1),
-        afid2=af_st.afid_positions(label=1),
-    )
-    def test_same_labels(self, afid1: AfidPosition, afid2: AfidPosition):
-        afid_distance = AfidDistance(
-            afid_position1=afid1, afid_position2=afid2
-        )
-
-        # Check output and properties
-        assert isinstance(afid_distance, AfidDistance)
-        assert isinstance(afid_distance.x, float)
-        assert isinstance(afid_distance.z, float)
-        assert isinstance(afid_distance.y, float)
-        assert (
-            isinstance(afid_distance.distance, float)
-            and afid_distance.distance >= 0
-        )
-
-    @given(
-        afid1=af_st.afid_positions(),
-        afid2=af_st.afid_positions(),
-    )
-    def test_diff_labels(self, afid1: AfidPosition, afid2: AfidPosition):
-        assume(afid1.label != afid2.label)
-
-        with pytest.warns(UserWarning, match=r".*non-corresponding AFIDs"):
-            AfidDistance(afid_position1=afid1, afid_position2=afid2)
 
 
 class TestAfidsIO:
@@ -356,3 +330,61 @@ class TestAfidsCore:
 
         with pytest.raises(InvalidFiducialError, match=".*not valid"):
             afid_set.get_afid(label)
+
+
+class TestAfidsDistance:
+    @given(
+        afid1=af_st.afid_positions(label=1),
+        afid2=af_st.afid_positions(label=1),
+    )
+    def test_same_labels(self, afid1: AfidPosition, afid2: AfidPosition):
+        afid_distance = AfidDistance(
+            afid_position1=afid1, afid_position2=afid2
+        )
+
+        # Check output and properties
+        assert isinstance(afid_distance, AfidDistance)
+        assert isinstance(afid_distance.x, float)
+        assert isinstance(afid_distance.z, float)
+        assert isinstance(afid_distance.y, float)
+        assert (
+            isinstance(afid_distance.distance, float)
+            and afid_distance.distance >= 0
+        )
+
+    @given(
+        afid1=af_st.afid_positions(),
+        afid2=af_st.afid_positions(),
+    )
+    def test_diff_labels(self, afid1: AfidPosition, afid2: AfidPosition):
+        assume(afid1.label != afid2.label)
+
+        with pytest.warns(UserWarning, match=r".*non-corresponding AFIDs"):
+            AfidDistance(afid_position1=afid1, afid_position2=afid2)
+
+
+class TestAfidsDistanceSet:
+    @given(
+        afid_set1=af_st.afid_sets(randomize_header=False),
+        afid_set2=af_st.afid_sets(randomize_header=False),
+    )
+    def test_valid_afid_set(self, afid_set1: AfidSet, afid_set2: AfidSet):
+        afid_distance_set = AfidDistanceSet(
+            afid_set1=afid_set1, afid_set2=afid_set2
+        )
+
+        # Check afids property is correct (list[AfidDistances])
+        assert isinstance(afid_distance_set.afids, list)
+        for idx in range(len(afid_set1.afids)):
+            assert isinstance(afid_distance_set.afids[idx], AfidDistance)
+
+    @given(
+        afid_set1=af_st.afid_sets(randomize_header=False),
+        afid_set2=af_st.afid_sets(randomize_header=False),
+    )
+    def test_mismatched_coords(self, afid_set1: AfidSet, afid_set2: AfidSet):
+        # Manually mismatch the coord system due to slow data generation
+        afid_set2.coord_system = "LPS"
+
+        with pytest.raises(ValueError, match=r"Mismatched coord.*"):
+            AfidDistanceSet(afid_set1, afid_set2).afids

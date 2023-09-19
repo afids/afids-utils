@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
 import warnings
 from importlib import resources
 from os import PathLike
@@ -59,18 +58,6 @@ class AfidPosition:
     y: float = attrs.field()
     z: float = attrs.field()
     desc: str = attrs.field(validator=_validate_desc)
-
-    def __sub__(self, other: AfidPosition) -> tuple[float, float, float]:
-        # Compute distances
-        x_dist = self.x - other.x
-        y_dist = self.y - other.y
-        z_dist = self.z - other.z
-
-        return x_dist, y_dist, z_dist
-
-
-def sort_afids(afids: Iterable[AfidPosition]) -> list[AfidPosition]:
-    return list(sorted(afids, key=lambda afid: afid.label))
 
 
 def _validate_afids(
@@ -148,9 +135,10 @@ class AfidSet:
 
     slicer_version: str = attrs.field()
     coord_system: str = attrs.field()
-
     afids: list[AfidPosition] = attrs.field(
-        converter=sort_afids,
+        converter=lambda afids: list(
+            sorted(afids, key=lambda afid: afid.label)
+        ),
         validator=_validate_afids,
     )
 
@@ -365,11 +353,11 @@ class AfidDistanceSet:
             raise ValueError("Mismatched coordinate systems")
 
         # Compute distances between AfidSets
-        afids = [
+        distances = [
             AfidDistance(afid_set1_position, afid_set2_position)
             for afid_set1_position, afid_set2_position in zip(
                 self.afid_set1.afids, self.afid_set2.afids
             )
         ]
 
-        return afids
+        return distances

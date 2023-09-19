@@ -113,7 +113,7 @@ def afid_sets(
     randomize_header: bool = True,
 ) -> AfidSet:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))
-    coord_system = draw(st.sampled_from(["RAS", "LPS", "0", "1"]))
+    coord_system = draw(st.sampled_from(["RAS", "LPS"]))
 
     # Set (in)valid number of Afid coordinates in a list
     afid_pos: list[AfidPosition] = []

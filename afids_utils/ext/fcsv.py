@@ -10,7 +10,7 @@ from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
 
 HEADER_ROWS: int = 2
-FCSV_FIELDNAMES: tuple[str] = (
+FCSV_FIELDNAMES: tuple[str, ...] = (
     "# columns = id",
     "x",
     "y",
@@ -88,7 +88,7 @@ def _get_afids(in_fcsv: list[str]) -> list[AfidPosition]:
     afids = in_fcsv[HEADER_ROWS + 1 :]
 
     # Add to list of AfidPosition
-    afids_positions = []
+    afids_positions: list[AfidPosition] = []
     for afid in afids:
         afid = afid.split(",")
         afids_positions.append(

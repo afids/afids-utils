@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 from numpy.typing import NDArray
+from pytest import approx  # type: ignore
 
 import afids_utils.tests.strategies as af_st
 import afids_utils.transforms as af_xfm
@@ -23,9 +24,9 @@ class TestAfidWorld2Voxel:
 
         assert isinstance(afid_voxel, AfidVoxel)
         # Have to assert specific int dtype
-        assert isinstance(afid_voxel.i, np.int64)
-        assert isinstance(afid_voxel.j, np.int64)
-        assert isinstance(afid_voxel.k, np.int64)
+        assert type(afid_voxel.i) == np.int64
+        assert type(afid_voxel.j) == np.int64
+        assert type(afid_voxel.k) == np.int64
 
     @given(afid_voxel=af_st.afid_voxels(), nii_affine=af_st.affine_xfms())
     @deadline(time=400)
@@ -33,7 +34,7 @@ class TestAfidWorld2Voxel:
         self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
     ):
         with pytest.raises(TypeError, match="Not an AfidPosition.*"):
-            af_xfm.world_to_voxel(afid_voxel, nii_affine)
+            af_xfm.world_to_voxel(afid_voxel, nii_affine)  # type: ignore
 
 
 class TestAfidVoxel2World:
@@ -46,9 +47,9 @@ class TestAfidVoxel2World:
 
         assert isinstance(afid_position, AfidPosition)
         # Have to assert specific float dtype
-        assert isinstance(afid_position.x, np.float64)
-        assert isinstance(afid_position.y, np.float64)
-        assert isinstance(afid_position.z, np.float64)
+        assert type(afid_position.x) == np.float64
+        assert type(afid_position.y) == np.float64
+        assert type(afid_position.z) == np.float64
 
     @given(
         afid_position=af_st.afid_positions(), nii_affine=af_st.affine_xfms()
@@ -58,7 +59,7 @@ class TestAfidVoxel2World:
         self, afid_position: AfidPosition, nii_affine: NDArray[np.float_]
     ):
         with pytest.raises(TypeError, match="Not an AfidVoxel.*"):
-            af_xfm.voxel_to_world(afid_position, nii_affine)
+            af_xfm.voxel_to_world(afid_position, nii_affine)  # type: ignore
 
 
 class TestAfidRoundTripConvert:
@@ -75,9 +76,9 @@ class TestAfidRoundTripConvert:
 
         # Check to see if round-trip approximates to within 10mm
         # Very loose approx, due to lack of imposed constraints
-        assert afid_position_approx.x == pytest.approx(afid_position.x, abs=10)
-        assert afid_position_approx.y == pytest.approx(afid_position.y, abs=10)
-        assert afid_position_approx.z == pytest.approx(afid_position.z, abs=10)
+        assert afid_position_approx.x == approx(afid_position.x, abs=10)
+        assert afid_position_approx.y == approx(afid_position.y, abs=10)
+        assert afid_position_approx.z == approx(afid_position.z, abs=10)
 
     @given(afid_voxel=af_st.afid_voxels(), nii_affine=af_st.affine_xfms())
     @deadline(time=400)
@@ -88,9 +89,9 @@ class TestAfidRoundTripConvert:
         afid_voxel_approx = af_xfm.world_to_voxel(afid_world, nii_affine)
 
         # Check to see if round-trip approximates to within 2 voxels
-        assert afid_voxel_approx.i == pytest.approx(afid_voxel.i, abs=2)
-        assert afid_voxel_approx.j == pytest.approx(afid_voxel.j, abs=2)
-        assert afid_voxel_approx.k == pytest.approx(afid_voxel.k, abs=2)
+        assert afid_voxel_approx.i == approx(afid_voxel.i, abs=2)
+        assert afid_voxel_approx.j == approx(afid_voxel.j, abs=2)
+        assert afid_voxel_approx.k == approx(afid_voxel.k, abs=2)
 
 
 class TestXfmCoordSystem:
@@ -111,7 +112,7 @@ class TestXfmCoordSystem:
 
     @given(afid_set=af_st.afid_sets(randomize_header=False))
     @deadline(time=400)
-    def test_valid_new_coord_system(self, afid_set):
+    def test_valid_new_coord_system(self, afid_set: AfidSet):
         new_afid_set = af_xfm.xfm_coord_system(afid_set)
         print(afid_set.coord_system, new_afid_set.coord_system)
 

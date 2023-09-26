@@ -16,7 +16,11 @@ with resources.open_text(
     HUMAN_PROTOCOL_MAP = json.load(json_fpath)["human"]
 
 
-def _validate_desc(self, attribute: attrs.Attribute[str], value: str):
+def _validate_desc(
+    self: AfidPosition,
+    attribute: attrs.Attribute[str],
+    value: str,
+):
     if value not in [
         HUMAN_PROTOCOL_MAP[self.label - 1]["desc"],
         HUMAN_PROTOCOL_MAP[self.label - 1]["acronym"],
@@ -131,8 +135,8 @@ class AfidSet:
     slicer_version: str = attrs.field()
     coord_system: str = attrs.field()
     afids: list[AfidPosition] = attrs.field(
-        converter=lambda afids: list(
-            sorted(afids, key=lambda afid: afid.label)
+        converter=lambda afids: list(  # type: ignore
+            sorted(afids, key=lambda afid: afid.label)  # type: ignore
         ),
         validator=_validate_afids,
     )

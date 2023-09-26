@@ -29,14 +29,14 @@ def world_to_voxel(
     AfidVoxel
         Object containing transformed integer voxel coordinates (i, j, k)
     """
-    if not isinstance(afid_world, AfidPosition):
+    if not isinstance(afid_world, AfidPosition):  # type: ignore
         raise TypeError("Not an AfidPosition object")
 
     # Put into numpy array for easier computation
     world_pos = np.asarray([afid_world.x, afid_world.y, afid_world.z])
 
     # Translation, rotation, and round to nearest voxel
-    voxel_pos = np.linalg.inv(nii_affine[:3, :3]).dot(
+    voxel_pos = np.linalg.inv(nii_affine[:3, :3]).dot(  # type: ignore
         world_pos - nii_affine[:3, 3]
     )
     voxel_pos = np.rint(voxel_pos).astype(int)
@@ -71,14 +71,16 @@ def voxel_to_world(
         Object containing approximate floating-point spatial coordinates
         (x, y, z)
     """
-    if not isinstance(afid_voxel, AfidVoxel):
+    if not isinstance(afid_voxel, AfidVoxel):  # type: ignore
         raise TypeError("Not an AfidVoxel object")
 
     # Put into numpy array for easier computation
     voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k])
 
     # Perform rotation, translation
-    world_pos = nii_affine[:3, :3].dot(voxel_pos) + nii_affine[:3, 3]
+    world_pos = (
+        nii_affine[:3, :3].dot(voxel_pos) + nii_affine[:3, 3]  # type: ignore
+    )
 
     return AfidPosition(
         label=afid_voxel.label,

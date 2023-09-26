@@ -7,14 +7,15 @@ from os import PathLike
 from pathlib import Path
 
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from hypothesis import assume, given
 from hypothesis import strategies as st
 
-import afids_utils.ext.fcsv as af_fcsv
-import afids_utils.ext.json as af_json
+import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFileError
-from afids_utils.tests.strategies import afid_sets
+from afids_utils.ext import fcsv as af_fcsv
+from afids_utils.ext import json as af_json
+from afids_utils.tests.helpers import allow_function_scoped
 
 
 @pytest.fixture
@@ -33,10 +34,8 @@ def valid_json_file() -> Path:
 
 class TestLoadFcsv:
     @given(coord_num=st.integers(min_value=0, max_value=1))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
-    def test_fcsv_get_valid_metadata(
+    @allow_function_scoped
+    def test_get_valid_metadata(
         self, valid_fcsv_file: PathLike[str], coord_num: int
     ):
         # Randomize coordinate system
@@ -71,10 +70,8 @@ class TestLoadFcsv:
             assert parsed_coord == "LPS"
 
     @given(coord_num=st.integers(min_value=2))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
-    def test_fcsv_invalid_num_coord(
+    @allow_function_scoped
+    def test_invalid_num_coord(
         self, valid_fcsv_file: PathLike[str], coord_num: int
     ):
         with open(valid_fcsv_file) as valid_fcsv:
@@ -98,18 +95,9 @@ class TestLoadFcsv:
                 ):
                     af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
-    @given(
-        coord_str=st.text(
-            min_size=3,
-            alphabet=st.characters(
-                min_codepoint=ord("A"), max_codepoint=ord("z")
-            ),
-        )
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
-    def test_fcsv_invalid_str_coord(
+    @given(coord_str=af_st.short_ascii_text())
+    @allow_function_scoped
+    def test_invalid_str_coord(
         self, valid_fcsv_file: PathLike[str], coord_str: int
     ):
         assume(coord_str not in ["RAS", "LPS"])
@@ -154,23 +142,18 @@ class TestLoadFcsv:
                 ):
                     af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
-    @given(label=st.integers(min_value=0, max_value=31))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(label=af_st.valid_labels())
+    @allow_function_scoped
     def test_valid_get_afids(self, valid_fcsv_file: PathLike[str], label: int):
         with open(valid_fcsv_file) as valid_fcsv:
             afids_positions = af_fcsv._get_afids(valid_fcsv.readlines())
 
         assert isinstance(afids_positions, list)
-        assert isinstance(afids_positions[label], AfidPosition)
+        assert isinstance(afids_positions[label - 1], AfidPosition)
 
 
 class TestSaveFcsv:
-    @given(afid_set=afid_sets())
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(afid_set=af_st.afid_sets())
     def test_save_fcsv_invalid_template(
         self,
         afid_set: AfidSet,
@@ -178,10 +161,7 @@ class TestSaveFcsv:
         with pytest.raises(FileNotFoundError):
             af_fcsv.save_fcsv(afid_set, "/invalid/template/path.fcsv")
 
-    @given(afid_set=afid_sets(randomize_header=False))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(afid_set=af_st.afid_sets(randomize_header=False))
     def test_save_fcsv_valid_template(self, afid_set: AfidSet):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.fcsv"
@@ -197,9 +177,7 @@ class TestSaveFcsv:
 
 class TestLoadJson:
     @given(coord=st.sampled_from(["RAS", "LPS", "0", "1"]))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_json_get_valid_metadata(
         self, valid_json_file: PathLike[str], coord: str
     ):
@@ -232,9 +210,7 @@ class TestLoadJson:
             assert parsed_coord == "LPS"
 
     @given(coord_num=st.integers(min_value=2))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_json_invalid_num_coord(
         self, valid_json_file: PathLike[str], coord_num: int
     ):
@@ -265,9 +241,7 @@ class TestLoadJson:
             ),
         )
     )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_json_invalid_str_coord(
         self, valid_json_file: PathLike[str], coord_str: str
     ):
@@ -293,9 +267,7 @@ class TestLoadJson:
                     af_json._get_metadata(temp_afids_json["markups"][0])
 
     @given(label=st.integers(min_value=0, max_value=31))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_json_valid_get_afids(
         self, valid_json_file: PathLike[str], label: int
     ):
@@ -310,10 +282,7 @@ class TestLoadJson:
 
 
 class TestSaveJson:
-    @given(afid_set=afid_sets())
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(afid_set=af_st.afid_sets())
     def test_save_json_invalid_template(
         self,
         afid_set: AfidSet,
@@ -321,10 +290,7 @@ class TestSaveJson:
         with pytest.raises(FileNotFoundError):
             af_json.save_json(afid_set, "/invalid/template/path.json")
 
-    @given(afid_set=afid_sets(randomize_header=False))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(afid_set=af_st.afid_sets(randomize_header=False))
     def test_save_json_valid_template(self, afid_set: AfidSet):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix="_afids.json"

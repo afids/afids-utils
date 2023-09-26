@@ -8,13 +8,14 @@ from os import PathLike
 from pathlib import Path
 
 import pytest
-from hypothesis import HealthCheck, assume, example, given, settings
+from hypothesis import assume, example, given
 from hypothesis import strategies as st
 from more_itertools import pairwise
 
 import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidSet
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
+from afids_utils.tests.helpers import allow_function_scoped
 
 
 @pytest.fixture
@@ -158,13 +159,8 @@ class TestAfidSet:
 
 
 class TestAfidsIO:
-    @given(
-        label=st.integers(min_value=0, max_value=31),
-        ext=st.sampled_from(["fcsv", "json"]),
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(label=af_st.valid_labels(), ext=st.sampled_from(["fcsv", "json"]))
+    @allow_function_scoped
     def test_valid_load(self, valid_file: PathLike[str], label: int, ext: str):
         # Load valid file to check internal types
         afids_set = AfidSet.load(valid_file.with_suffix(f".{ext}"))
@@ -176,25 +172,14 @@ class TestAfidsIO:
         assert isinstance(afids_set.slicer_version, str)
         assert isinstance(afids_set.coord_system, str)
         assert isinstance(afids_set.afids, list)
-        assert isinstance(afids_set.afids[label], AfidPosition)
+        assert isinstance(afids_set.afids[label - 1], AfidPosition)
 
     def test_invalid_fpath(self):
         with pytest.raises(FileNotFoundError, match=".*does not exist"):
             AfidSet.load("invalid/fpath.fcsv")
 
-    @given(
-        ext=st.text(
-            min_size=2,
-            max_size=5,
-            alphabet=st.characters(
-                min_codepoint=ord("A"), max_codepoint=ord("z")
-            ),
-        )
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
-    def test_invalid_ext(self, valid_file: PathLike[str], ext: str):
+    @given(ext=af_st.short_ascii_text())
+    def test_invalid_ext(self, ext: str):
         assume(not ext == "fcsv" or not ext == "json")
 
         with tempfile.NamedTemporaryFile(
@@ -223,19 +208,8 @@ class TestAfidsIO:
             with pytest.raises(InvalidFileError, match="Unexpected number.*"):
                 AfidSet.load(out_fcsv_file.name)
 
-    @given(
-        label=st.integers(min_value=0, max_value=31),
-        desc=st.text(
-            min_size=2,
-            max_size=5,
-            alphabet=st.characters(
-                min_codepoint=ord("A"), max_codepoint=ord("z")
-            ),
-        ),
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(label=af_st.valid_labels(), desc=af_st.short_ascii_text())
+    @allow_function_scoped
     def test_invalid_desc(
         self,
         valid_file: PathLike[str],
@@ -246,16 +220,16 @@ class TestAfidsIO:
         assume(
             desc
             not in [
-                human_mappings[label]["desc"],
-                human_mappings[label]["acronym"],
+                human_mappings[label - 1]["desc"],
+                human_mappings[label - 1]["acronym"],
             ]
         )
 
         # Replace valid description with a mismatch
         with open(valid_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
-            fcsv_data[label + 3] = fcsv_data[label + 3].replace(
-                human_mappings[label]["desc"], desc
+            fcsv_data[label + 2] = fcsv_data[label + 2].replace(
+                human_mappings[label - 1]["desc"], desc
             )
 
         # Write to temp file
@@ -274,9 +248,7 @@ class TestAfidsIO:
                 AfidSet.load(out_fcsv_file.name)
 
     @given(ext=st.sampled_from(["fcsv", "json"]))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_valid_save(self, valid_file: PathLike[str], ext: str):
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix=f"_afids.{ext}"
@@ -288,17 +260,9 @@ class TestAfidsIO:
 
     @given(
         ext=st.sampled_from(["fcsv", "json"]),
-        invalid_ext=st.text(
-            min_size=2,
-            max_size=5,
-            alphabet=st.characters(
-                min_codepoint=ord("A"), max_codepoint=ord("z")
-            ),
-        ),
+        invalid_ext=af_st.short_ascii_text(),
     )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_invalid_ext_save(
         self, valid_file: PathLike[str], ext: str, invalid_ext: str
     ):
@@ -312,9 +276,6 @@ class TestAfidsIO:
                 afid_set.save(out_file.name)
 
     @given(afid_set=af_st.afid_sets(), ext=st.sampled_from(["fcsv", "json"]))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
     def test_save_invalid_coord_system(self, afid_set: AfidSet, ext: str):
         afid_set.coord_system = "invalid"
 
@@ -328,9 +289,6 @@ class TestAfidsIO:
 
     @given(
         afid_set=af_st.afid_sets(), coord_sys=st.sampled_from(["RAS", "LPS"])
-    )
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
     )
     def test_update_coord_system(self, afid_set: AfidSet, coord_sys: str):
         afid_set.coord_system = coord_sys
@@ -354,10 +312,8 @@ class TestAfidsIO:
 
 
 class TestAfidsCore:
-    @given(label=st.integers(min_value=1, max_value=32))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @given(label=af_st.valid_labels())
+    @allow_function_scoped
     def test_valid_get_afid(self, valid_file: PathLike[str], label: int):
         afid_set = AfidSet.load(valid_file)
         afid_pos = afid_set.get_afid(label)
@@ -366,9 +322,7 @@ class TestAfidsCore:
         assert isinstance(afid_pos, AfidPosition)
 
     @given(label=st.integers(min_value=-100, max_value=100))
-    @settings(
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-    )
+    @allow_function_scoped
     def test_invalid_get_afid(self, valid_file: PathLike[str], label: int):
         afid_set = AfidSet.load(valid_file)
         assume(not 1 <= label <= len(afid_set.afids))

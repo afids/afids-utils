@@ -18,6 +18,14 @@ with resources.open_text(
     HUMAN_PROTOCOL_MAP = json.load(json_fpath)["human"]
 
 
+def short_ascii_text():
+    return st.text(
+        min_size=2,
+        max_size=5,
+        alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("z")),
+    )
+
+
 def valid_labels():
     return st.integers(min_value=1, max_value=32)
 

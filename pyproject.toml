@@ -48,7 +48,7 @@ quality = ["yamlfix", "ruff", "isort", "black"]
 quality-check = [
     "yamlfix-check", "ruff-check", "isort-check", "black-check", "pyright"
 ]
-test = "pytest --doctest-modules afids_utils/tests"
+test = "pytest --store-durations --doctest-modules afids_utils/tests"
 
 [tool.coverage]
 omit = "afids_utils/tests/*"
@@ -83,10 +83,4 @@ shell = """
 find . -type f \\( \
     -iname \\*.yaml -o -iname \\*.yml \
 \\) -exec yamlfix --check {} \\;
-"""
-
-[tool.poe.tasks.test_cov]
-shell = """
-pytest --doctest-modules --cov=afids_utils afids_utils/tests/ \
---cov-report xml:../cov.xml
 """

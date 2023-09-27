@@ -31,6 +31,7 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.8', '3.9', '3.10', '3.11']
+        test-split: ['1', '2', '3', '4', '5']
     steps:
       - name: Setup Python environment
         uses: khanlab/actions/.github/actions/action-setup_task-installPyProject@v0.2.0
@@ -38,7 +39,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           install-library: true
       - name: Perform unit testing
-        run: poetry run poe test_cov
+        run: >-
+          poetry run pytest -n auto --splits 5 --group ${{ matrix.test-split }}  --doctest-modules  --cov=afids_utils
+          afids_utils/tests/ --cov-report xml:../cov.xml
       - name: Upload coverage
         uses: codecov/codecov-action@v3
         with:

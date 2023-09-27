@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from importlib import resources
 from os import PathLike
 from pathlib import Path
@@ -57,6 +58,10 @@ class AfidPosition:
     y: float = attrs.field()
     z: float = attrs.field()
     desc: str = attrs.field(validator=_validate_desc)
+
+
+def sort_afids(afids: Iterable[AfidPosition]) -> list[AfidPosition]:
+    return list(sorted(afids, key=lambda afid: afid.label))
 
 
 def _validate_afids(
@@ -134,10 +139,9 @@ class AfidSet:
 
     slicer_version: str = attrs.field()
     coord_system: str = attrs.field()
+
     afids: list[AfidPosition] = attrs.field(
-        converter=lambda afids: list(  # type: ignore
-            sorted(afids, key=lambda afid: afid.label)  # type: ignore
-        ),
+        converter=sort_afids,
         validator=_validate_afids,
     )
 

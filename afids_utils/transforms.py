@@ -36,8 +36,8 @@ def world_to_voxel(
     world_pos = np.asarray([afid_world.x, afid_world.y, afid_world.z])
 
     # Translation, rotation, and round to nearest voxel
-    voxel_pos = np.linalg.inv(nii_affine[:3, :3]).dot(  # type: ignore
-        world_pos - nii_affine[:3, 3]
+    voxel_pos = np.dot(
+        np.linalg.inv(nii_affine[:3, :3]), world_pos - nii_affine[:3, 3]
     )
     voxel_pos = np.rint(voxel_pos).astype(int)
 
@@ -78,9 +78,7 @@ def voxel_to_world(
     voxel_pos = np.asarray([afid_voxel.i, afid_voxel.j, afid_voxel.k])
 
     # Perform rotation, translation
-    world_pos = (
-        nii_affine[:3, :3].dot(voxel_pos) + nii_affine[:3, 3]  # type: ignore
-    )
+    world_pos = np.dot(nii_affine[:3, :3], voxel_pos) + nii_affine[:3, 3]
 
     return AfidPosition(
         label=afid_voxel.label,

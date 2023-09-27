@@ -179,7 +179,7 @@ class TestAfidsIO:
 
     @given(ext=af_st.short_ascii_text())
     def test_invalid_ext(self, ext: str):
-        assume(not ext == "fcsv" or not ext == "json")  # type: ignore
+        assume(ext not in {"fcsv", "json"})
 
         with tempfile.NamedTemporaryFile(
             mode="w",
@@ -265,10 +265,7 @@ class TestAfidsIO:
     def test_invalid_ext_save(
         self, valid_file: Path, ext: str, invalid_ext: str
     ):
-        assume(
-            not invalid_ext == "fcsv"  # type: ignore
-            or not invalid_ext == "json"  # type: ignore
-        )
+        assume(invalid_ext not in {"fcsv", "json"})
 
         with tempfile.NamedTemporaryFile(
             mode="w", prefix="sub-test_desc-", suffix=f"_afids.{invalid_ext}"

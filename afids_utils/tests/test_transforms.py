@@ -34,7 +34,7 @@ class TestAfidWorld2Voxel:
         self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
     ):
         with pytest.raises(TypeError, match="Not an AfidPosition.*"):
-            af_xfm.world_to_voxel(afid_voxel, nii_affine)  # type: ignore
+            af_xfm.world_to_voxel(afid_voxel, nii_affine)  # pyright: ignore
 
 
 class TestAfidVoxel2World:

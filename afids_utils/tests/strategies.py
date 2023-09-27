@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from importlib import resources
 from itertools import chain
+from typing import Literal
 
 import numpy as np
 from hypothesis import assume
@@ -108,7 +109,7 @@ def afid_sets(
     draw: st.DrawFn,
     min_value: float = -50.0,
     max_value: float = 50.0,
-    width: int = 16,
+    width: Literal[16, 32, 64] = 16,
     randomize_header: bool = True,
 ) -> AfidSet:
     slicer_version = draw(st.from_regex(r"\d+\.\d+"))

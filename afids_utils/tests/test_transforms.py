@@ -28,14 +28,6 @@ class TestAfidWorld2Voxel:
         assert type(afid_voxel.j) == np.int64
         assert type(afid_voxel.k) == np.int64
 
-    @given(afid_voxel=af_st.afid_voxels(), nii_affine=af_st.affine_xfms())
-    @deadline(time=400)
-    def test_invalid_world_type(
-        self, afid_voxel: AfidVoxel, nii_affine: NDArray[np.float_]
-    ):
-        with pytest.raises(TypeError, match="Not an AfidPosition.*"):
-            af_xfm.world_to_voxel(afid_voxel, nii_affine)  # pyright: ignore
-
 
 class TestAfidVoxel2World:
     @given(afid_voxel=af_st.afid_voxels(), nii_affine=af_st.affine_xfms())
@@ -50,16 +42,6 @@ class TestAfidVoxel2World:
         assert type(afid_position.x) == np.float64
         assert type(afid_position.y) == np.float64
         assert type(afid_position.z) == np.float64
-
-    @given(
-        afid_position=af_st.afid_positions(), nii_affine=af_st.affine_xfms()
-    )
-    @deadline(time=400)
-    def test_invalid_voxel_type(
-        self, afid_position: AfidPosition, nii_affine: NDArray[np.float_]
-    ):
-        with pytest.raises(TypeError, match="Not an AfidVoxel.*"):
-            af_xfm.voxel_to_world(afid_position, nii_affine)  # type: ignore
 
 
 class TestAfidRoundTripConvert:

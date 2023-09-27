@@ -28,6 +28,7 @@ pytest = "^7.3.1"
 hypothesis = {extras = ["numpy"], version = "^6.77.0"}
 pytest-cov = "^4.1.0"
 more-itertools = "^10.1.0"
+pyright = "^1.1.327"
 
 [build-system]
 requires = ["poetry-core"]
@@ -40,8 +41,11 @@ black = "black afids_utils"
 black-check = "black --check afids_utils"
 ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
+pyright = "pyright"
 quality = ["yamlfix", "ruff", "isort", "black"]
-quality-check = ["yamlfix-check", "ruff-check", "isort-check", "black-check"]
+quality-check = [
+    "yamlfix-check", "ruff-check", "isort-check", "black-check", "pyright"
+]
 test = "pytest --doctest-modules afids_utils/tests"
 
 [tool.coverage]
@@ -60,6 +64,10 @@ line-length = 79
 
 [tool.ruff]
 line-length = 79
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportPrivateUsage = false
 
 [tool.poe.tasks.yamlfix]
 shell = """

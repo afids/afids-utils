@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import tempfile
-from os import PathLike
 from pathlib import Path
 
 import pytest
@@ -35,9 +34,7 @@ def valid_json_file() -> Path:
 class TestLoadFcsv:
     @given(coord_num=st.integers(min_value=0, max_value=1))
     @allow_function_scoped
-    def test_get_valid_metadata(
-        self, valid_fcsv_file: PathLike[str], coord_num: int
-    ):
+    def test_get_valid_metadata(self, valid_fcsv_file: Path, coord_num: int):
         # Randomize coordinate system
         with open(valid_fcsv_file) as valid_fcsv:
             valid_fcsv_data = valid_fcsv.readlines()
@@ -71,9 +68,7 @@ class TestLoadFcsv:
 
     @given(coord_num=st.integers(min_value=2))
     @allow_function_scoped
-    def test_invalid_num_coord(
-        self, valid_fcsv_file: PathLike[str], coord_num: int
-    ):
+    def test_invalid_num_coord(self, valid_fcsv_file: Path, coord_num: int):
         with open(valid_fcsv_file) as valid_fcsv:
             fcsv_data = valid_fcsv.readlines()
             fcsv_data[1] = fcsv_data[1].replace(
@@ -97,9 +92,7 @@ class TestLoadFcsv:
 
     @given(coord_str=af_st.short_ascii_text())
     @allow_function_scoped
-    def test_invalid_str_coord(
-        self, valid_fcsv_file: PathLike[str], coord_str: int
-    ):
+    def test_invalid_str_coord(self, valid_fcsv_file: Path, coord_str: str):
         assume(coord_str not in ["RAS", "LPS"])
 
         with open(valid_fcsv_file) as valid_fcsv:
@@ -123,7 +116,7 @@ class TestLoadFcsv:
                 ):
                     af_fcsv._get_metadata(temp_in_fcsv.readlines())
 
-    def test_fcsv_invalid_header(self, valid_fcsv_file: PathLike[str]):
+    def test_fcsv_invalid_header(self, valid_fcsv_file: Path):
         with open(valid_fcsv_file) as valid_fcsv:
             valid_fcsv_data = valid_fcsv.readlines()
             invalid_fcsv_data = valid_fcsv_data[0]
@@ -144,7 +137,7 @@ class TestLoadFcsv:
 
     @given(label=af_st.valid_labels())
     @allow_function_scoped
-    def test_valid_get_afids(self, valid_fcsv_file: PathLike[str], label: int):
+    def test_valid_get_afids(self, valid_fcsv_file: Path, label: int):
         with open(valid_fcsv_file) as valid_fcsv:
             afids_positions = af_fcsv._get_afids(valid_fcsv.readlines())
 
@@ -178,9 +171,7 @@ class TestSaveFcsv:
 class TestLoadJson:
     @given(coord=st.sampled_from(["RAS", "LPS", "0", "1"]))
     @allow_function_scoped
-    def test_json_get_valid_metadata(
-        self, valid_json_file: PathLike[str], coord: str
-    ):
+    def test_json_get_valid_metadata(self, valid_json_file: Path, coord: str):
         # Randomize coordinate system
         with open(valid_json_file) as valid_json:
             afids_json = json.load(valid_json)
@@ -212,7 +203,7 @@ class TestLoadJson:
     @given(coord_num=st.integers(min_value=2))
     @allow_function_scoped
     def test_json_invalid_num_coord(
-        self, valid_json_file: PathLike[str], coord_num: int
+        self, valid_json_file: Path, coord_num: int
     ):
         with open(valid_json_file) as valid_json:
             afids_json = json.load(valid_json)
@@ -243,7 +234,7 @@ class TestLoadJson:
     )
     @allow_function_scoped
     def test_json_invalid_str_coord(
-        self, valid_json_file: PathLike[str], coord_str: str
+        self, valid_json_file: Path, coord_str: str
     ):
         assume(coord_str not in ["RAS", "LPS"])
 
@@ -268,9 +259,7 @@ class TestLoadJson:
 
     @given(label=st.integers(min_value=0, max_value=31))
     @allow_function_scoped
-    def test_json_valid_get_afids(
-        self, valid_json_file: PathLike[str], label: int
-    ):
+    def test_json_valid_get_afids(self, valid_json_file: Path, label: int):
         with open(valid_json_file) as valid_json:
             afids_json = json.load(valid_json)
             afids_positions = af_json._get_afids(

@@ -7,7 +7,7 @@ from itertools import chain
 import numpy as np
 from hypothesis import assume
 from hypothesis import strategies as st
-from hypothesis.extra.numpy import arrays
+from hypothesis.extra.numpy import arrays  # type: ignore
 from numpy.typing import NDArray
 
 from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
@@ -90,7 +90,7 @@ def position_lists(
         )
         multiples = [
             1 if unique else draw(st.integers(min_value=1, max_value=3))
-            for value in values
+            for _ in values
         ]
         assume(unique or (not all(multiple == 1 for multiple in multiples)))
         labels = chain(
@@ -115,7 +115,7 @@ def afid_sets(
     coord_system = draw(st.sampled_from(["RAS", "LPS", "0", "1"]))
 
     # Set (in)valid number of Afid coordinates in a list
-    afid_pos = []
+    afid_pos: list[AfidPosition] = []
     num_afids = 32
     # Load expected mappings
     with resources.open_text(
@@ -167,8 +167,8 @@ def affine_xfms(
     for i in range(3):
         scale[i, i] = draw(st.floats(min_value=0.1, max_value=10))
 
-    rotation_vals = draw(
-        arrays(
+    rotation_vals = draw(  # type: ignore
+        arrays(  # type: ignore
             shape=(3),
             dtype=np.float_,
             elements=st.floats(min_value=-np.pi, max_value=np.pi),
@@ -202,7 +202,7 @@ def affine_xfms(
 
     translation = affine.copy()
     translation[:3, 3] = draw(
-        arrays(
+        arrays(  # type: ignore
             shape=(3),
             dtype=np.float_,
             elements=st.floats(min_value=-50.0, max_value=50.0),

@@ -38,10 +38,6 @@ class TestMeanAfidSet:
             )
         )
 
-    def test_invalid_input_type(self):
-        with pytest.raises(ValueError, match=r".*collection of AfidSet.*"):
-            af_metrics.mean_afid_sets(["random string"])
-
 
 class TestMeanDistances:
     @given(
@@ -60,12 +56,6 @@ class TestMeanDistances:
             list(map(lambda dist: isinstance(dist, float), mean_distances))
         )
         assert all(list(map(lambda dist: dist >= 0, mean_distances)))
-
-    def test_invalid_input_type(self):
-        with pytest.raises(
-            ValueError, match=r".*collection of AfidDistanceSet.*"
-        ):
-            af_metrics.mean_distances(["random string"])
 
     @given(
         afid_set1=af_st.afid_sets(randomize_header=False),

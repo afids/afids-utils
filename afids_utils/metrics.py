@@ -25,10 +25,6 @@ def mean_afid_sets(afid_sets: list[AfidSet]) -> AfidSet:
         are different coordinate systems in provided list of ``AfidSet``
         objects
     """
-    # Check to make sure input datatype is correct
-    if not all(list(map(lambda x: isinstance(x, AfidSet), afid_sets))):
-        raise ValueError("Input is not a collection of AfidSet objects")
-
     # Check if coordinate systems are all the same
     if not all(
         afid_set.coord_system == afid_sets[0].coord_system
@@ -85,14 +81,6 @@ def mean_distances(
         If no single common ``AfidSet`` used to compute ``AfidDistance`` or
         list does not consist of all ``AfidDistanceSet`` objects
     """
-    # Check to make sure all input types are correct
-    if not all(
-        list(map(lambda x: isinstance(x, AfidDistanceSet), afid_distance_sets))
-    ):
-        raise ValueError(
-            "Input is not a collection of AfidDistanceSet objects"
-        )
-
     # Check for common AfidSet
     if afid_distance_sets[0].afid_set1 in [
         afid_distance_sets[1].afid_set1,

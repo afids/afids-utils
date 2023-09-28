@@ -362,6 +362,36 @@ class TestAfidsDistance:
         with pytest.warns(UserWarning, match=r".*non-corresponding AFIDs"):
             AfidDistance(afid_position1=afid1, afid_position2=afid2)
 
+    @given(
+        afid1=af_st.afid_positions(label=1),
+        afid2=af_st.afid_positions(label=1),
+        component=st.sampled_from(["x", "y", "z", "distance"]),
+    )
+    def test_get_valid_component(
+        self, afid1: AfidPosition, afid2: AfidPosition, component: str
+    ):
+        afid_distance = AfidDistance(
+            afid_position1=afid1, afid_position2=afid2
+        )
+        # Check to make sure get works and a value is returned
+        assert float("-inf") < afid_distance.get(component) < float("inf")
+
+    @given(
+        afid1=af_st.afid_positions(label=1),
+        afid2=af_st.afid_positions(label=1),
+    )
+    def test_get_invalid_component(
+        self,
+        afid1: AfidPosition,
+        afid2: AfidPosition,
+    ):
+        afid_distance = AfidDistance(
+            afid_position1=afid1, afid_position2=afid2
+        )
+
+        with pytest.raises(ValueError, match="Invalid component"):
+            afid_distance.get("invalid_component")
+
 
 class TestAfidsDistanceSet:
     @given(

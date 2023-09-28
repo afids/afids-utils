@@ -325,6 +325,15 @@ class AfidDistance:
         """Floating-point distance between a pair of AFIDs"""
         return (self.x**2 + self.y**2 + self.z**2) ** 0.5
 
+    def get(self, component: str):
+        """Return value of specified component"""
+        valid_components = ["x", "y", "z", "distance"]
+
+        if component in valid_components:
+            return getattr(self, component)
+        else:
+            raise ValueError(f"Invalid component '{component}'")
+
 
 @attrs.define()
 class AfidDistanceSet:

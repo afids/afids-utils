@@ -57,64 +57,47 @@ def mean_afid_sets(afid_sets: list[AfidSet]) -> AfidSet:
 
 
 def mean_distances(
-    afid_distance_sets: list[AfidDistanceSet],
+    afid_sets: list[AfidSet],
+    template_afid_set: AfidSet,
+    component: str = "distance",
 ) -> list[float]:
-    """Calculate the average distance from a collection of
-    ``AfidDistanceSet`` objects. Ensure that one of the ``AfidSet`` objects
-    used to compute each ``AfidDistanceSet`` is consistent across all sets in
-    the list.
+    """Calculate the average distance for a given spatial component betweeen
+    a collection of ``AfidSet`` objects and a common / template ``AfidSet``.
 
     Parameters
     ----------
-    afid_distance_sets
-        List of ``AfidDistanceSet`` objects to compute mean distance from
+    afid_sets
+        List of ``AfidSet`` objects to compute distances with
+
+    template_afid_set
+        Template / common ``AfidSet`` to compute distances against
+
+    component
+        Spatial component to compute - if "distance" will compute Euclidean
+        distance (default: "distance")
 
     Returns
     -------
     list[float]
-        Dictionary object describing average spatial component and Euclidean
-        distances
+        List of average distances along each spatial component and Euclidean
+        distance
 
-    Raises
-    ------
-    ValueError
-        If no single common ``AfidSet`` used to compute ``AfidDistance`` or
-        list does not consist of all ``AfidDistanceSet`` objects
     """
-    # Check for common AfidSet
-    if afid_distance_sets[0].afid_set1 in [
-        afid_distance_sets[1].afid_set1,
-        afid_distance_sets[1].afid_set2,
-    ]:
-        common_set = afid_distance_sets[0].afid_set1
-    elif afid_distance_sets[0].afid_set2 in [
-        afid_distance_sets[1].afid_set1,
-        afid_distance_sets[1].afid_set2,
-    ]:
-        common_set = afid_distance_sets[0].afid_set2
-    else:
-        raise ValueError(
-            "No single common AfidSet found within AfidDistanceSet objects"
-        )
-
-    for idx in range(2, len(afid_distance_sets)):
-        if common_set not in [
-            afid_distance_sets[idx].afid_set1,
-            afid_distance_sets[idx].afid_set2,
-        ]:
-            raise ValueError(
-                "No single common AfidSet found within AfidDistanceSet objects"
-            )
+    # Compute distances
+    afid_distance_sets = [
+        AfidDistanceSet(afid_set1=afid_set, afid_set2=template_afid_set)
+        for afid_set in afid_sets
+    ]
 
     # Compute mean distance for each AFID
-    num_pairs = len(afid_distance_sets)
-    mean_distance = [
+    num_comparisons = len(afid_distance_sets)
+    mean_component = [
         sum(
-            afid_distance_set.afids[idx].distance
+            afid_distance_set.afids[idx].get(component)
             for afid_distance_set in afid_distance_sets
         )
-        / num_pairs
+        / num_comparisons
         for idx in range(len(afid_distance_sets[0].afids))
     ]
 
-    return mean_distance
+    return mean_component

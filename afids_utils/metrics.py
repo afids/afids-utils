@@ -1,6 +1,8 @@
 """Methods for computing various metrics pertaining to AFIDs"""
 from __future__ import annotations
 
+import statistics as stats
+
 from afids_utils.afids import AfidDistanceSet, AfidPosition, AfidSet
 
 
@@ -34,29 +36,31 @@ def mean_afid_sets(afid_sets: list[AfidSet]) -> AfidSet:
             "Mismatched coordinate system in provided list of AfidSet"
         )
 
-    num_sets = len(afid_sets)
     mean_afid_set = AfidSet(
         slicer_version="Unknown",
         coord_system=afid_sets[0].coord_system,
         afids=[
             AfidPosition(
-                label=afid_sets[0].afids[idx].label,
-                x=sum(afid_set.afids[idx].x for afid_set in afid_sets)
-                / num_sets,
-                y=sum(afid_set.afids[idx].y for afid_set in afid_sets)
-                / num_sets,
-                z=sum(afid_set.afids[idx].z for afid_set in afid_sets)
-                / num_sets,
-                desc=afid_sets[0].afids[idx].desc,
+                label=afid.label,
+                x=stats.mean(
+                    [afid_set.afids[idx].x for afid_set in afid_sets]
+                ),
+                y=stats.mean(
+                    [afid_set.afids[idx].y for afid_set in afid_sets]
+                ),
+                z=stats.mean(
+                    [afid_set.afids[idx].z for afid_set in afid_sets]
+                ),
+                desc=afid.desc,
             )
-            for idx in range(len(afid_sets[0].afids))
+            for idx, afid in enumerate(afid_sets[0].afids)
         ],
     )
 
     return mean_afid_set
 
 
-def mean_distance_to_template(
+def mean_distances(
     afid_sets: list[AfidSet],
     template_afid_set: AfidSet,
     component: str = "distance",
@@ -90,13 +94,13 @@ def mean_distance_to_template(
     ]
 
     # Compute mean distance for each AFID
-    num_comparisons = len(afid_distance_sets)
     mean_component = [
-        sum(
-            afid_distance_set.afids[idx].get(component)
-            for afid_distance_set in afid_distance_sets
+        stats.mean(
+            [
+                afid_distance_set.afids[idx].get(component)
+                for afid_distance_set in afid_distance_sets
+            ]
         )
-        / num_comparisons
         for idx in range(len(afid_distance_sets[0].afids))
     ]
 

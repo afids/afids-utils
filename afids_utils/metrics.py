@@ -56,7 +56,7 @@ def mean_afid_sets(afid_sets: list[AfidSet]) -> AfidSet:
     return mean_afid_set
 
 
-def mean_distances(
+def mean_distance_to_template(
     afid_sets: list[AfidSet],
     template_afid_set: AfidSet,
     component: str = "distance",

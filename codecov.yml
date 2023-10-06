@@ -15,6 +15,9 @@ component_management:
     - component_id: afids-utils_ext
       name: afids_utils/ext
       paths: [afids_utils/ext/*.py]
+    - component_id: afids-utils_metrics
+      name: afids_utils/metrics.py
+      paths: [afids_utils/metrics.py]
     - component_id: afids-utils_transforms
       name: afids_utils/transforms.py
       paths: [afids_utils/transforms.py]

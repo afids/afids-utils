@@ -2,13 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from nibabel.nifti1 import Nifti1Image
-from nibabel.loadsave import load
-from nilearn.plotting.html_stat_map import StatMapView
-
 import pytest
 from hypothesis import assume, given
-from hypothesis import strategies as st
+from nibabel.loadsave import load  # pyright: ignore
+from nibabel.nifti1 import Nifti1Image
+from nilearn.plotting.html_stat_map import StatMapView
 
 import afids_utils.plotting as af_plot
 import afids_utils.tests.helpers as af_helpers
@@ -18,7 +16,7 @@ from afids_utils.afids import AfidPosition, AfidVoxel
 
 @pytest.fixture
 def template_t1w() -> Nifti1Image:
-    return load(
+    return load(  # pyright: ignore
         Path(__file__).parent
         / "data"
         / "tpl-MNI152NLin2009cAsym_res-02_T1w.nii.gz"
@@ -66,7 +64,9 @@ class TestPlotOrtho:
     @given(afid_voxels=af_st.afid_voxels())
     @af_helpers.allow_function_scoped_deadline(time=2000)
     def test_plot_ortho_afid_voxels(
-        self, afid_voxels: AfidVoxel, template_t1w: Nifti1Image
+        self,
+        afid_voxels: AfidVoxel,  # pyright: ignore
+        template_t1w: Nifti1Image,
     ):
         # Constrain coordinates to within template dimensions
         assume(
@@ -75,7 +75,9 @@ class TestPlotOrtho:
             and 0 <= afid_voxels.k <= template_t1w.shape[2] - 1
         )
 
-        afid_voxels: list[AfidVoxel] = [afid_voxels for _ in range(2)]
+        afid_voxels: list[AfidVoxel | AfidPosition] = [
+            afid_voxels for _ in range(2)
+        ]
         view = af_plot.plot_ortho(
             afids=afid_voxels,
             nii_img=template_t1w,
@@ -103,7 +105,9 @@ class TestPlotOrtho:
     @given(afid_positions=af_st.afid_positions())
     @af_helpers.allow_function_scoped_deadline(time=2000)
     def test_plot_ortho_afid_positions(
-        self, afid_positions: AfidPosition, template_t1w: Nifti1Image
+        self,
+        afid_positions: AfidPosition,  # pyright: ignore
+        template_t1w: Nifti1Image,
     ):
         # Constrain coordinates to within template dimensions
         assume(
@@ -112,7 +116,9 @@ class TestPlotOrtho:
             and 0 <= afid_positions.z <= template_t1w.shape[2] / 2.0
         )
 
-        afid_positions: list[AfidPosition] = [afid_positions for _ in range(2)]
+        afid_positions: list[AfidVoxel | AfidPosition] = [
+            afid_positions for _ in range(2)
+        ]
         view = af_plot.plot_ortho(
             afids=afid_positions,
             nii_img=template_t1w,

@@ -45,7 +45,7 @@ black = "black afids_utils"
 black-check = "black --check afids_utils"
 ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
-pyright = "pyright"
+pyright = "pyright afids_utils"
 quality = ["yamlfix", "ruff", "isort", "black"]
 quality-check = [
     "yamlfix-check",

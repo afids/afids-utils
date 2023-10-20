@@ -65,7 +65,7 @@ def mean_distances(
     template_afid_set: AfidSet,
     component: str = "distance",
 ) -> list[float]:
-    """Calculate the average distance for a given spatial component betweeen
+    """Calculate the average distance for a given spatial component between
     a collection of ``AfidSet`` objects and a common / template ``AfidSet``.
 
     Parameters

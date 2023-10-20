@@ -87,11 +87,11 @@ def plot_ortho(
     nii_img: nib.nifti1.Nifti1Image,
     opacity: float = 1,
 ) -> StatMapView:
-    """Generate interactive, html ortho view of the slices. Uses ``nilearn``
-    to generate the figures.
+    """Generate interactive, html ortho view of the slices. Uses
+    ``nilearn.plotting`` to generate the figures.
 
     The generated view can either be opened interactively or saved as a figure
-    per ``nilearn`` functionality:
+    per ``nilearn.plotting`` functionality:
         * Interactive view - ``view.open_in_browser()``
         * Save - ``view.save_as_html(file_name.html)``
 
@@ -108,7 +108,6 @@ def plot_ortho(
 
     opacity:
         Opacity value [0 - transparent, 1 - opaque] of overlaid AFIDs
-        (default: 0.8)
 
     Returns
     -------

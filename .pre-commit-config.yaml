@@ -29,7 +29,7 @@ repos:
   hooks:
     - name: black
       id: black
-      entry: poetry run black -l 79 afids_utils/
+      entry: poetry run black afids_utils/
       language: system 
       types_or: [cython, pyi, python]
 

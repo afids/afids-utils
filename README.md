@@ -83,7 +83,15 @@ poetry run poe test
 ```
 
 Additionally, `afids-utils` makes use of a number of libraries to lint and
-format code, which can be invoked by running:
+format code, which can be invoked by running the following:
+
+```bash
+poetry run poe setup
+```
+
+This sets up a pre-commit hook, which runs the ncessary checks every time
+a commit is performed. Alternatively, if you don't wish to use the pre-commit
+hook, you can run the following manually, which performs the same checks:
 
 ```bash
 poetry run poe quality

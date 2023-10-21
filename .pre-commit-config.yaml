@@ -1,0 +1,43 @@
+---
+default_language_version:
+  python: python3
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+  - id: check-yaml
+
+- repo: local
+  hooks:
+    - name: ruff
+      id: ruff
+      entry: poetry run ruff --fix afids_utils/
+      language: system
+      types_or: [cython, pyi, python]
+
+
+- repo: local
+  hooks:
+    - name: isort
+      id: isort
+      entry: poetry run isort afids_utils/
+      language: system
+      types_or: [cython, pyi, python]
+
+
+- repo: local
+  hooks:
+    - name: black
+      id: black
+      entry: poetry run black -l 79 afids_utils/
+      language: system 
+      types_or: [cython, pyi, python]
+
+
+- repo: local
+  hooks:
+    - name: pyright
+      id: pyright
+      entry: poetry run pyright afids_utils/
+      language: system
+      types_or: [cython, pyi, python]

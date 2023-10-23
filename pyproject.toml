@@ -5,9 +5,7 @@ description = "Utility functions for working with AFIDs data / workflows"
 authors = ["Jason Kai <tkai@uwo.ca>"]
 license = "MIT"
 readme = "README.md"
-packages = [
-    {include = "afids_utils"}
-]
+packages = [{ include = "afids_utils" }]
 exclude = ["afids_utils/tests"]
 
 [tool.poetry.dependencies]
@@ -25,18 +23,20 @@ isort = ">=5.12.0"
 poethepoet = ">=0.20.0"
 yamlfix = ">=1.10.0"
 pytest = ">=7.3.1"
-hypothesis = {extras = ["numpy"], version = ">=6.77.0"}
+hypothesis = { extras = ["numpy"], version = ">=6.77.0" }
 pytest-cov = ">=4.1.0"
 more-itertools = ">=10.1.0"
 pyright = ">=1.1.327"
 pytest-xdist = ">=3.3.1"
 pytest-split = ">=0.8.1"
+pre-commit = "^3.5.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poe.tasks]
+setup = "pre-commit install"
 isort = "isort afids_utils"
 isort-check = "isort -c afids_utils"
 black = "black afids_utils"
@@ -46,7 +46,11 @@ ruff-check = "ruff afids_utils"
 pyright = "pyright"
 quality = ["yamlfix", "ruff", "isort", "black"]
 quality-check = [
-    "yamlfix-check", "ruff-check", "isort-check", "black-check", "pyright"
+    "yamlfix-check",
+    "ruff-check",
+    "isort-check",
+    "black-check",
+    "pyright",
 ]
 test = "pytest --store-durations --doctest-modules afids_utils/tests"
 

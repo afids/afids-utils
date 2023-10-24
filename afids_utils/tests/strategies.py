@@ -31,6 +31,12 @@ def valid_labels():
     return st.integers(min_value=1, max_value=32)
 
 
+def valid_distances():
+    return st.floats(
+        allow_nan=False, min_value=-10, max_value=10, allow_infinity=False
+    )
+
+
 # Constrain coordinates to be within 180mm or 200 voxels in any direction
 def valid_position_coords():
     return st.floats(
@@ -73,6 +79,11 @@ def afid_voxels(draw: st.DrawFn, label: int | None = None) -> AfidVoxel:
     i, j, k = (draw(valid_voxel_coords()) for _ in range(3))
     desc = HUMAN_PROTOCOL_MAP[label - 1]["desc"]
     return AfidVoxel(label=label, i=i, j=j, k=k, desc=desc)
+
+
+@st.composite
+def afid_distances(draw: st.DrawFn) -> list[float]:
+    return [draw(valid_distances()) for _ in range(32)]
 
 
 @st.composite

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from importlib import resources
 from pathlib import Path
 
 import pytest
@@ -8,11 +10,22 @@ from nibabel.loadsave import load  # pyright: ignore
 from nibabel.nifti1 import Nifti1Image
 from nilearn.plotting.displays._projectors import LYRZProjector
 from nilearn.plotting.html_stat_map import StatMapView
+from plotly.graph_objs._figure import Figure as goFigure
 
 import afids_utils.plotting as af_plot
 import afids_utils.tests.helpers as af_helpers
 import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidVoxel
+
+
+@pytest.fixture
+def human_mappings() -> list[dict[str, str]]:
+    with resources.open_text(
+        "afids_utils.resources", "afids_descs.json"
+    ) as json_fpath:
+        mappings = json.load(json_fpath)
+
+    return mappings["human"]
 
 
 @pytest.fixture
@@ -141,6 +154,37 @@ class TestPlotConnectome:
         view.close()  # pyright: ignore
 
 
+class TestPlotHistogram:
+    @given(afid_distances=af_st.afid_distances())
+    def test_do_binning(self, afid_distances: list[float]):
+        bin_strs = af_plot._do_binning(in_data=afid_distances)
+        assert all(isinstance(bin_str, str) for bin_str in bin_strs)
+
+    @given(afid_distances=af_st.afid_distances())
+    def test_create_histogram_plot_no_labels(
+        self, afid_distances: list[float]
+    ):
+        view = af_plot._create_histogram_plot(afid_distances=afid_distances)
+        assert view is not None
+        assert isinstance(view, goFigure)
+        del view
+
+    @given(afid_distances=af_st.afid_distances())
+    @af_helpers.allow_function_scoped
+    def test_create_histogram_plot_labels(
+        self, afid_distances: list[float], human_mappings: list[dict[str, str]]
+    ):
+        afid_labels: list[str] = [
+            human_mappings[idx]["desc"] for idx in range(len(afid_distances))
+        ]
+        view = af_plot._create_histogram_plot(
+            afid_distances=afid_distances, afid_labels=afid_labels
+        )
+        assert view is not None
+        assert isinstance(view, goFigure)
+        del view
+
+
 class TestPlotDistanceSummary:
     @given(
         afid_distances=af_st.afid_distances(),
@@ -157,7 +201,8 @@ class TestPlotDistanceSummary:
     @given(afid_distances=af_st.afid_distances())
     @af_helpers.deadline(time=None)
     @pytest.mark.parametrize(
-        "plot_type, view_type", [("connectome", LYRZProjector)]
+        "plot_type, view_type",
+        [("connectome", LYRZProjector), ("histogram", goFigure)],
     )
     def test_plot_summary(
         self,
@@ -166,7 +211,9 @@ class TestPlotDistanceSummary:
         view_type: type,
     ):
         view = af_plot.plot_distance_summary(
-            afid_distances=afid_distances, plot_type=plot_type
+            afid_distances=afid_distances,
+            afid_labels=None,
+            plot_type=plot_type,
         )
         assert isinstance(view, view_type)
         view.close()  # pyright: ignore

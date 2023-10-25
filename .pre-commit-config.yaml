@@ -41,3 +41,5 @@ repos:
       entry: poetry run pyright afids_utils/
       language: system
       types_or: [cython, pyi, python]
+
+exclude: 'typings/.*'

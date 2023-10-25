@@ -6,9 +6,11 @@ from importlib import resources
 import nibabel as nib
 import nilearn.plotting as niplot
 import numpy as np
+import plotly.graph_objects as go
 from matplotlib.colors import LinearSegmentedColormap
 from nilearn.plotting.displays._projectors import LYRZProjector
 from numpy.typing import NDArray
+from plotly.graph_objs._figure import Figure as goFigure
 
 from afids_utils.afids import AfidPosition, AfidSet, AfidVoxel
 from afids_utils.transforms import world_to_voxel
@@ -87,14 +89,14 @@ def _create_afid_nii(
 def _create_connectome_plot(
     afid_distances: list[float],
 ) -> LYRZProjector:
-    """Internal function to generate a connectome plot of distances
+    """Internal function to generate a connectome plot of absolute distances
     for a complete ``AfidSet`` collection.
 
     Parameters
     ----------
     afid_distances
-        List of average distances either along a spatial component or Euclidean
-        distance
+        List of average absolute distances either along a spatial component
+        or Euclidean distance
 
     Returns
     -------
@@ -120,6 +122,98 @@ def _create_connectome_plot(
         node_vmax=max(afid_distances),
         alpha=0.8,
         display_mode="lyrz",
+    )
+
+    return view  # pyright: ignore
+
+
+def _do_binning(in_data: list[float], n_bins: int = 6) -> list[str]:
+    """Internal function to manually bin list of numbers
+
+    Parameters
+    ----------
+    in_data
+        Values to bin
+
+    nbins
+        The number of bins to use (default: 6)
+
+    Returns
+    -------
+    list[str]
+        List of string describing bin limits
+    """
+    output: list[str] = []
+
+    full_range = int(max(in_data)) + 1
+    interval = full_range / n_bins
+
+    for val in in_data:
+        for bin_idx in range(n_bins):
+            val -= interval
+            if val < 0:
+                out = interval * bin_idx
+                break
+
+        out_formatted = (
+            f"{round(out, 2)} - {round(out + interval, 2)}"  # pyright: ignore
+        )
+        output.append(out_formatted)
+
+    return output
+
+
+def _create_histogram_plot(
+    afid_distances: list[float],
+    afid_labels: list[str] | None = None,
+) -> goFigure:
+    """Internal function to create a histogram figure of absolute distances
+    with plotly and optional labels.
+
+    Parameters
+    ----------
+    afid_distances
+        List of average absolute distances either along a spatial component
+        or Euclidean distance
+
+    afid_labels
+        List of strings denoting associated labels with distances. If none
+        provided, will use integer representation in order distances are
+        provided
+
+    Returns
+    -------
+    go.Figure
+        Figure object created with Plotly, demonstrating the histogram
+        of absolute distances
+    """
+    # If labels not provided, use index
+    if not afid_labels:
+        afid_labels = [f"{idx+1}" for idx in range(len(afid_distances))]
+
+    # Sort distances by magnitude
+    afid_distances, afid_labels = zip(  # pyright: ignore
+        *sorted(zip(afid_distances, afid_labels), key=lambda x: x[0])
+    )
+
+    view: goFigure = go.Figure(  # pyright: ignore
+        data=go.Bar(  # pyright: ignore
+            x=_do_binning(afid_distances),
+            y=[1 for _ in afid_labels],  # pyright: ignore
+            text=[
+                f"Label: {afid_labels[idx]} <br>"  # pyright:ignore
+                f"Distance: {round(dist, 3)} mm"
+                for idx, dist in enumerate(afid_distances)
+            ],
+            marker_color=afid_distances,
+            marker_colorscale="magma",
+            showlegend=False,
+        )
+    )
+
+    view.update_layout(  # pyright: ignore
+        autosize=True,
+        coloraxis={"colorscale": "magma"},
     )
 
     return view  # pyright: ignore
@@ -188,16 +282,21 @@ def plot_ortho(
 
 def plot_distance_summary(
     afid_distances: list[float],
+    afid_labels: list[str] | None = None,
     plot_type: str = "connectome",
 ) -> LYRZProjector:
-    """Generate a summary plot of average distances for a complete ``AfidSet``
-    collection.
+    """Generate a summary plot of average absolute distances for a
+    complete ``AfidSet`` collection.
 
     Parameters
     ----------
     afid_distances
         List of average distances either along a spatial component or Euclidean
         distance
+
+    afid_labels
+        List of strings denoting associated labels with distances. Note, these
+        are only used with plot type "histogram" and "scatter".
 
     plot_type
         Type of plot to generate - one of ["connectome", "scatter",
@@ -206,12 +305,15 @@ def plot_distance_summary(
     Returns
     -------
     LYRZProjector
-        View object as either a connectome, scatterplot or histogram dependent
+        View object as either a connectome, scatter or histogram dependent
         on plot_type
 
     """
     # Make plot_type case-insensitive
     plot_type = plot_type.lower()
+
+    # Grab magnitudes of distances (i.e. for 'x', 'y', 'z')
+    afid_distances = [np.abs(distance) for distance in afid_distances]
 
     # Generate connectome plot
     if plot_type == "connectome":
@@ -219,7 +321,9 @@ def plot_distance_summary(
     elif plot_type == "scatter":
         pass
     elif plot_type == "histogram":
-        pass
+        view = _create_histogram_plot(
+            afid_distances=afid_distances, afid_labels=afid_labels
+        )
     # Throw error if invalid plot type
     else:
         raise ValueError(

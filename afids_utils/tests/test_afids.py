@@ -19,7 +19,7 @@ from afids_utils.afids import (
     AfidSet,
 )
 from afids_utils.exceptions import InvalidFiducialError, InvalidFileError
-from afids_utils.tests.helpers import allow_function_scoped
+from afids_utils.tests.helpers import allow_function_scoped, slow_generation
 
 
 @pytest.fixture
@@ -79,6 +79,7 @@ class TestAfidSet:
         coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(),
     )
+    @slow_generation
     def test_valid_afid_set(
         self,
         slicer_version: str,
@@ -117,6 +118,7 @@ class TestAfidSet:
         coord_system=st.sampled_from(["RAS", "LPS", "0", "1"]),
         positions=af_st.position_lists(unique=False),
     )
+    @slow_generation
     def test_repeated_afid_set(
         self,
         slicer_version: str,
@@ -417,6 +419,7 @@ class TestAfidsDistanceSet:
         afid_set1=af_st.afid_sets(randomize_header=False),
         afid_set2=af_st.afid_sets(randomize_header=False),
     )
+    @slow_generation
     def test_mismatched_coords(self, afid_set1: AfidSet, afid_set2: AfidSet):
         # Manually mismatch the coord system due to slow data generation
         afid_set2.coord_system = "LPS"

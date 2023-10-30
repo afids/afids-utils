@@ -9,6 +9,7 @@ from hypothesis import strategies as st
 import afids_utils.metrics as af_metrics
 import afids_utils.tests.strategies as af_st
 from afids_utils.afids import AfidPosition, AfidSet
+from afids_utils.tests.helpers import slow_generation
 
 
 class TestMeanAfidSet:
@@ -26,6 +27,7 @@ class TestMeanAfidSet:
     @given(
         afid_set1=af_st.afid_sets(randomize_header=False),
     )
+    @slow_generation
     def test_valid_afid_sets(self, afid_set1: AfidSet):
         mean_afid_set = af_metrics.mean_afid_sets([afid_set1, afid_set1])
 

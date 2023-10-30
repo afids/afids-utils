@@ -74,7 +74,7 @@ class TestPlotOrtho:
             afid_nii=template_t1w,
         )
         assert isinstance(view, StatMapView)
-        view.close()  # pyright: ignore
+        del view
 
     @given(afid_voxels=af_st.afid_voxels())
     @af_helpers.allow_function_scoped_deadline(time=None)
@@ -98,7 +98,7 @@ class TestPlotOrtho:
             afid_nii=template_t1w,
         )
         assert isinstance(view, StatMapView)
-        view.close()  # pyright: ignore
+        del view
 
     @given(afid_positions=af_st.afid_positions())
     @af_helpers.allow_function_scoped_deadline(time=None)
@@ -117,7 +117,7 @@ class TestPlotOrtho:
             afid_nii=template_t1w,
         )
         assert isinstance(view, StatMapView)
-        view.close()  # pyright: ignore
+        del view
 
     @given(afid_positions=af_st.afid_positions())
     @af_helpers.allow_function_scoped_deadline(time=None)
@@ -141,7 +141,7 @@ class TestPlotOrtho:
             afid_nii=template_t1w,
         )
         assert isinstance(view, StatMapView)
-        view.close()  # pyright: ignore
+        del view
 
 
 class TestPlotConnectome:

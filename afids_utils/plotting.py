@@ -89,13 +89,13 @@ def _create_afid_nii(
 def _create_connectome_plot(
     afid_distances: list[float],
 ) -> LYRZProjector:
-    """Internal function to generate a connectome plot of absolute distances
+    """Internal function to generate a connectome plot of distances
     for a complete ``AfidSet`` collection.
 
     Parameters
     ----------
     afid_distances
-        List of average absolute distances either along a spatial component
+        List of average distances either along a spatial component
         or Euclidean distance
 
     Returns
@@ -118,7 +118,7 @@ def _create_connectome_plot(
         node_coords=template_coords,
         node_size=20,
         node_cmap="magma",
-        node_vmin=min(0, afid_distances),  # Set to 0 or negative value
+        node_vmin=min(0, *afid_distances),  # Set to 0 or negative value
         node_vmax=max(afid_distances),
         alpha=0.8,
         display_mode="lyrz",
@@ -167,13 +167,13 @@ def _create_histogram_plot(
     afid_distances: list[float],
     afid_labels: list[str] | None = None,
 ) -> goFigure:
-    """Internal function to create a histogram figure of absolute distances
+    """Internal function to create a histogram figure of distances
     with plotly and optional labels.
 
     Parameters
     ----------
     afid_distances
-        List of average absolute distances either along a spatial component
+        List of average distances either along a spatial component
         or Euclidean distance
 
     afid_labels
@@ -185,7 +185,7 @@ def _create_histogram_plot(
     -------
     go.Figure
         Figure object created with Plotly, demonstrating the histogram
-        of absolute distances
+        of distances
     """
     # If labels not provided, use index
     if not afid_labels:
@@ -210,11 +210,60 @@ def _create_histogram_plot(
             showlegend=False,
         )
     )
-
     view.update_layout(  # pyright: ignore
         autosize=True,
         coloraxis={"colorscale": "magma"},
     )
+
+    return view  # pyright: ignore
+
+
+def _create_scatter_plot(
+    afid_distances: list[float],
+    afid_labels: list[str] | None = None,
+) -> goFigure:
+    """Internal function to create a scatter figure of distances with plotly
+    and optional labels.
+
+    Parameters
+    ----------
+    afid_distances
+        List of average distances either along a spatial component
+        or Euclidean distance
+
+    afid_labels
+        List of strings denoting associated labels with distances. If none
+        provided, will use integer representation in order distances are
+        provided
+
+    Returns
+    -------
+    go.Figure
+        Figure object created with Plotly, demonstrating the distances as a
+        scatter plot
+    """
+    # If labels not provided, use index
+    if not afid_labels:
+        afid_labels = [f"{idx+1}" for idx in range(len(afid_distances))]
+
+    view: goFigure = go.Figure(  # pyright: ignore
+        data=go.Scatter(  # pyright: ignore
+            x=afid_labels,
+            y=afid_distances,  # pyright: ignore
+            text=[
+                f"Label: {afid_labels[idx]} <br>"  # pyright:ignore
+                f"Distance: {round(dist, 3)} mm"
+                for idx, dist in enumerate(afid_distances)
+            ],
+            mode="markers",
+            marker=dict(size=[14] * len(afid_distances), color=COLORS),
+        )
+    )
+    view.update_xaxes(  # pyright: ignore
+        title_text="AFID Label",
+        tickangle=-45,
+    )
+    view.update_yaxes(title_text="Distance [mm]")  # pyright: ignore
 
     return view  # pyright: ignore
 
@@ -284,8 +333,8 @@ def plot_distance_summary(
     afid_distances: list[float],
     afid_labels: list[str] | None = None,
     plot_type: str = "connectome",
-) -> LYRZProjector:
-    """Generate a summary plot of average absolute distances for a
+) -> LYRZProjector | goFigure:
+    """Generate a summary plot of average distances for a
     complete ``AfidSet`` collection.
 
     Parameters
@@ -304,7 +353,7 @@ def plot_distance_summary(
 
     Returns
     -------
-    LYRZProjector
+    LYRZProjector | goFigure
         View object as either a connectome, scatter or histogram dependent
         on plot_type
 
@@ -316,7 +365,9 @@ def plot_distance_summary(
     if plot_type == "connectome":
         view = _create_connectome_plot(afid_distances=afid_distances)
     elif plot_type == "scatter":
-        pass
+        view = _create_scatter_plot(
+            afid_distances=afid_distances, afid_labels=afid_labels
+        )
     elif plot_type == "histogram":
         view = _create_histogram_plot(
             afid_distances=afid_distances, afid_labels=afid_labels

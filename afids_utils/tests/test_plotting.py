@@ -185,6 +185,30 @@ class TestPlotHistogram:
         del view
 
 
+class TestPlotScatter:
+    @given(afid_distances=af_st.afid_distances())
+    def test_create_scatter_plot_no_labels(self, afid_distances: list[float]):
+        view = af_plot._create_scatter_plot(afid_distances=afid_distances)
+        assert view is not None
+        assert isinstance(view, goFigure)
+        del view
+
+    @given(afid_distances=af_st.afid_distances())
+    @af_helpers.allow_function_scoped
+    def test_create_scatter_plot_labels(
+        self, afid_distances: list[float], human_mappings: list[dict[str, str]]
+    ):
+        afid_labels: list[str] = [
+            human_mappings[idx]["desc"] for idx in range(len(afid_distances))
+        ]
+        view = af_plot._create_scatter_plot(
+            afid_distances=afid_distances, afid_labels=afid_labels
+        )
+        assert view is not None
+        assert isinstance(view, goFigure)
+        del view
+
+
 class TestPlotDistanceSummary:
     @given(
         afid_distances=af_st.afid_distances(),
@@ -202,7 +226,11 @@ class TestPlotDistanceSummary:
     @af_helpers.deadline(time=None)
     @pytest.mark.parametrize(
         "plot_type, view_type",
-        [("connectome", LYRZProjector), ("histogram", goFigure)],
+        [
+            ("connectome", LYRZProjector),
+            ("scatter", goFigure),
+            ("histogram", goFigure),
+        ],
     )
     def test_plot_summary(
         self,
@@ -216,4 +244,9 @@ class TestPlotDistanceSummary:
             plot_type=plot_type,
         )
         assert isinstance(view, view_type)
-        view.close()  # pyright: ignore
+
+        # Remove figure to avoid having too many open (memory considerations)
+        if plot_type == "connectome":
+            view.close()  # pyright: ignore
+        else:
+            del view

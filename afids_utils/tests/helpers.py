@@ -36,3 +36,10 @@ def allow_function_scoped_deadline(
         )(callable)
 
     return inner
+
+
+def slow_generation(callable: _T, /) -> _T:
+    """Disable health check for slow data generation tests"""
+    return settings(
+        suppress_health_check=[HealthCheck.too_slow],
+    )(callable)

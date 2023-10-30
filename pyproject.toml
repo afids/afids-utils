@@ -54,7 +54,7 @@ quality-check = [
     "black-check",
     "pyright",
 ]
-test = "pytest --store-durations --doctest-modules afids_utils/tests"
+test = "pytest -n auto --store-durations --doctest-modules afids_utils/tests"
 
 [tool.coverage]
 omit = "afids_utils/tests/*"

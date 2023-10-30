@@ -118,7 +118,7 @@ def _create_connectome_plot(
         node_coords=template_coords,
         node_size=20,
         node_cmap="magma",
-        node_vmin=0,
+        node_vmin=min(0, afid_distances),  # Set to 0 or negative value
         node_vmax=max(afid_distances),
         alpha=0.8,
         display_mode="lyrz",
@@ -311,9 +311,6 @@ def plot_distance_summary(
     """
     # Make plot_type case-insensitive
     plot_type = plot_type.lower()
-
-    # Grab magnitudes of distances (i.e. for 'x', 'y', 'z')
-    afid_distances = [np.abs(distance) for distance in afid_distances]
 
     # Generate connectome plot
     if plot_type == "connectome":

@@ -1,5 +1,9 @@
 # Anatomical Fiducials (AFIDs) Utility Tools
 
+![GitHub release version](https://img.shields.io/github/v/release/afids/afids-utils)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue)](https://mit-license.org/)
+![CodeCov](https://img.shields.io/codecov/c/github/afids/afids-utils)
+[![Tests](https://github.com/afids/afids-utils/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/afids/afids-utils/actions/workflows/test.yml?query=branch%3Amain)
 [![Documentation Status](https://readthedocs.org/projects/afids-utils/badge/?version=stable)](https://afids-utils.readthedocs.io/en/stable/?badge=stable)
 
 The `afids-utils` package provides common utilities for projects involving
@@ -60,8 +64,8 @@ will be reviewed by a maintainer of the `afids-utils` repository.
 
 ### Poetry
 
-`afids-utils` depedencies are managed with Poetry (version 1.2.0+). Please
-refer to the [poetry website] for installation instructions. Following the
+`afids-utils` depedencies are managed with Poetry - please
+refer to the [Poetry website] for installation instructions. Following the
 installation of Poetry, the development environment can be set up from the
 local repository location by running the following commands:
 
@@ -101,5 +105,5 @@ Please ensure these all pass before making a pull request.
 
 [documentation]: https://afids-utils.readthedocs.io/en/stable
 [issues page]: https://github.com/afids/afids-utils/issues
-[poetry website]: https://python-poetry.org/docs/master/#installation
+[Poetry website]: https://python-poetry.org/docs/master/#installation
 [poethepoet]: https://github.com/nat-n/poethepoet

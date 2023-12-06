@@ -250,3 +250,36 @@ class TestPlotDistanceSummary:
             view.close()  # pyright: ignore
         else:
             del view
+
+
+class TestPlot3D:
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d(self, afid_positions: list[AfidPosition]):
+        view = af_plot.plot_3d(afids=afid_positions)
+        assert isinstance(view, goFigure)
+
+        del view
+
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d_dict(self, afid_positions: list[AfidPosition]):
+        # Static dict for testing
+        scatter_dict = {
+            "size": 8,
+            "color": "rgba(125, 125, 125, 0.5)",
+            "line": {"width": 3.0, "color": "rgba(0,0,0,1.)"},
+        }
+        view = af_plot.plot_3d(
+            afids=afid_positions, afids_scatter_dict=scatter_dict
+        )
+        assert isinstance(view, goFigure)
+
+        del view
+
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d_title(self, afid_positions: list[AfidPosition]):
+        # Static title for testing
+        title = "Test Title"
+        view = af_plot.plot_3d(afids=afid_positions, title=title)
+        assert isinstance(view, goFigure)
+
+        del view

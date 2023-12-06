@@ -54,6 +54,12 @@ CMAP = LinearSegmentedColormap.from_list(  # pyright: ignore
     name="afids_cmap", colors=COLORS, N=len(COLORS)
 )
 
+SCATTER_DICT = {
+    "size": 4,
+    "color": "rgba(0,0,0,0.9)",
+    "line": {"width": 1.5, "color": "rgba(50,50,50,1.0)"},
+}
+
 
 def _create_afid_nii(
     afid_voxels: list[AfidVoxel], afid_nii: nib.nifti1.Nifti1Image
@@ -378,5 +384,53 @@ def plot_distance_summary(
             "Invalid plot type provided - choose one of 'connectome', "
             "'scatter', or 'histogram."
         )
+
+    return view  # pyright: ignore
+
+
+def plot_3d(
+    afids: list[AfidPosition],
+    afids_scatter_dict: dict[
+        str, int | str | dict[str, float | str]
+    ] = SCATTER_DICT,
+    title: str = "",
+) -> goFigure:
+    """Generate 3D plot of AFIDs. Optionally visualize distance against
+    template and/or overlay with surface mesh.
+
+    Parameters
+    ----------
+    afids
+        Collection of AfidPositions to visualize.
+
+    afids_scatter_dict
+        Dictionary containing parameters for modifying visualization of afid
+        scatter points
+
+    title
+        Main title of figure
+    """
+    go_afids = go.Scatter3d(  # pyright: ignore
+        x=[afid.x for afid in afids],
+        y=[afid.y for afid in afids],
+        z=[afid.z for afid in afids],
+        showlegend=True,
+        mode="markers",
+        marker=afids_scatter_dict,
+        hovertemplate=("%{text}<br>x: %{x:.4f}<br>y: %{y:.4f}<br>z: %{z:.4f}"),
+        text=[f"<b>{afid.desc} ({afid.label})</b>" for afid in afids],
+        name="Subject AFIDs",
+    )
+
+    view = go.Figure()  # pyright: ignore
+    view.add_trace(go_afids)  # pyright: ignore
+
+    view.update_layout(  # pyright: ignore
+        title_text=title,
+        autosize=True,
+        barmode="stack",
+        coloraxis={"colorscale": "Bluered"},
+        legend_orientation="h",
+    )
 
     return view  # pyright: ignore

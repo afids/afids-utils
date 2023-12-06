@@ -99,7 +99,7 @@ format code, which can be invoked by running the following:
 poetry run poe setup
 ```
 
-This sets up a pre-commit hook, which runs the ncessary checks every time
+This sets up a pre-commit hook, which runs the necessary checks every time
 a commit is performed. Alternatively, if you don't wish to use the pre-commit
 hook, you can run the following manually, which performs the same checks:
 

@@ -18,6 +18,12 @@ refer to the [documentation] page.
 pip install afids-utils
 ```
 
+To also include plotting functionality (this will install `matplotlib`, `plotly`, and `nilearn`):
+
+```bash
+pip install afids-utils[plotting]
+```
+
 ## Contributing
 
 `afids-utils` is an open-source project and contributions are welcome! If you
@@ -70,7 +76,7 @@ installation of Poetry, the development environment can be set up from the
 local repository location by running the following commands:
 
 ```bash
-poetry install --with dev
+poetry install --with dev --all-extras
 ```
 
 Poetry uses [poethepoet] as a task runner. You can see what commands are

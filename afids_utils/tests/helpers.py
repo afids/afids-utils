@@ -22,3 +22,17 @@ def deadline(time: int | float | timedelta | None) -> Callable[[_T], _T]:
         return settings(deadline=time)(callable)
 
     return inner
+
+
+def allow_function_scoped_deadline(
+    time: int | float | timedelta | None,
+) -> Callable[[_T], _T]:
+    """Allow function scoped fixtures and change hypothesis deadline"""
+
+    def inner(callable: _T, /) -> _T:
+        return settings(
+            suppress_health_check=[HealthCheck.function_scoped_fixture],
+            deadline=time,
+        )(callable)
+
+    return inner

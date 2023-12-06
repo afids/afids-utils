@@ -10,6 +10,7 @@
 
 api/afids
 api/metrics
+api/plotting
 api/transform
 ```
 

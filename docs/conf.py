@@ -80,7 +80,11 @@ master_doc = "index"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
+    "nibabel": ("https://nipy.org/nibabel", None),
+    "nilearn": ("https://nilearn.github.io/stable/plotting", None),
     "numpy": ("https://numpy.org/doc/1.24", None),
+    "plotly": ("https://plotly.com/python", None),
 }
 
 

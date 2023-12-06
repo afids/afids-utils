@@ -12,9 +12,11 @@ exclude = ["afids_utils/tests"]
 python = ">=3.8, <3.12"
 attrs = ">=23.1.0"
 numpy = ">=1.24.3"
+nilearn = { version = ">=0.10.1", extras = ["plotting"], optional = true }
+plotly = { version = ">=5.16.1", optional = true }
 
-[tool.poetry.group.dev]
-optional = true
+[tool.poetry.extras]
+plotting = ["nilearn", "plotly"]
 
 [tool.poetry.group.dev.dependencies]
 black = ">=23.3.0"
@@ -43,7 +45,7 @@ black = "black afids_utils"
 black-check = "black --check afids_utils"
 ruff = "ruff --fix afids_utils"
 ruff-check = "ruff afids_utils"
-pyright = "pyright"
+pyright = "pyright afids_utils"
 quality = ["yamlfix", "ruff", "isort", "black"]
 quality-check = [
     "yamlfix-check",

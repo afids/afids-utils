@@ -283,3 +283,38 @@ class TestPlot3D:
         assert isinstance(view, goFigure)
 
         del view
+
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d_template(
+        self,
+        afid_positions: list[AfidPosition],
+    ):
+        view = af_plot.plot_3d(
+            afids=afid_positions, template_afids=afid_positions
+        )
+        assert isinstance(view, goFigure)
+
+        del view
+
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d_invalid_template(
+        self,
+        afid_positions: list[AfidPosition],
+    ):
+        with pytest.raises(ValueError, match="Mismatched number"):
+            af_plot.plot_3d(
+                afids=afid_positions, template_afids=afid_positions[1:]
+            )
+
+    @given(afid_positions=af_st.position_lists())
+    def test_plot_scatter3d_show_distance(
+        self, afid_positions: list[AfidPosition]
+    ):
+        view = af_plot.plot_3d(
+            afids=afid_positions,
+            template_afids=afid_positions,
+            show_distance=True,
+        )
+        assert isinstance(view, goFigure)
+
+        del view

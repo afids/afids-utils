@@ -15,7 +15,7 @@ from plotly.graph_objs._figure import Figure as goFigure
 import afids_utils.plotting as af_plot
 import afids_utils.tests.helpers as af_helpers
 import afids_utils.tests.strategies as af_st
-from afids_utils.afids import AfidPosition, AfidVoxel
+from afids_utils.afids import AfidDistance, AfidPosition, AfidVoxel
 
 
 @pytest.fixture
@@ -305,6 +305,21 @@ class TestPlot3D:
             af_plot.plot_3d(
                 afids=afid_positions, template_afids=afid_positions[1:]
             )
+
+    @given(afid_positions=af_st.position_lists())
+    def test_gen_distance_lines(self, afid_positions: list[AfidPosition]):
+        distances = [
+            AfidDistance(
+                afid_position1=afid_position, afid_position2=afid_position
+            )
+            for afid_position in afid_positions
+        ]
+        assert all(isinstance(dist, AfidDistance) for dist in distances)
+
+        lines = af_plot._gen_distance_lines(distances=distances)
+        assert isinstance(lines, dict)
+        for key in lines.keys():
+            assert len(lines[key]) == len(distances) * 4
 
     @given(afid_positions=af_st.position_lists())
     def test_plot_scatter3d_show_distance(
